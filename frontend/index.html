@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AeroLab · 2D Airfoil Wind Tunnel</title>
+  <meta name="description" content="Real-time 2D Lattice Boltzmann wind tunnel simulation of NACA airfoils with GPU acceleration and WebGL visualization." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <header class="topbar">
+    <h1><span class="logo">◢</span> AeroLab <small>2D Wind Tunnel · LBM D2Q9</small></h1>
+    <div class="conn" id="conn-status"><span class="dot"></span><span id="conn-text">connecting…</span></div>
+  </header>
+
+  <main class="layout">
+    <section class="viewport glass">
+      <canvas id="gl-canvas"></canvas>
+      <canvas id="vector-canvas"></canvas>
+      <div class="flow-arrow">FLOW →</div>
+      <div class="zoom-ctl">
+        <button id="btn-zoom-in" title="Zoom in (wheel)">+</button>
+        <span id="zoom-val">100%</span>
+        <button id="btn-zoom-out" title="Zoom out (wheel)">−</button>
+        <button id="btn-zoom-reset" title="Reset view (double-click)">⟲</button>
+      </div>
+      <div class="legend">
+        <span id="legend-min">0</span>
+        <div class="legend-bar" id="legend-bar"></div>
+        <span id="legend-max">1</span>
+        <span class="legend-label" id="legend-label">vorticity</span>
+      </div>
+      <div class="wand-reticle hidden" id="wand-reticle"></div>
+      <div class="wand-hint hidden" id="wand-hint">Wand Active · Drag to inject smoke</div>
+      <div class="status-banner hidden" id="status-banner"></div>
+    </section>
+
+    <aside class="panel glass">
+      <h2>Airfoil & Vectors</h2>
+      <label class="row">NACA 4-digit
+        <input type="text" id="naca-input" value="2412" maxlength="4" pattern="\d{4}" />
+      </label>
+      <label class="slider">Angle of attack <output id="aoa-val">8.0°</output>
+        <input type="range" id="aoa-slider" min="-15" max="25" step="0.5" value="8" />
+      </label>
+      <label class="toggle"><input type="checkbox" id="vec-toggle" checked /> Overlay Force Vectors</label>
+      <div class="row vec-suboptions" id="vec-options">
+        <label class="toggle toggle-sm"><input type="checkbox" id="vec-comp-toggle" checked /> Lift & Drag</label>
+        <label class="toggle toggle-sm"><input type="checkbox" id="vec-res-toggle" checked /> Resultant (R)</label>
+      </div>
+      <label class="slider slider-sm">Vector scale <output id="vec-scale-val">1.0×</output>
+        <input type="range" id="vec-scale-slider" min="0.2" max="3.0" step="0.1" value="1.0" />
+      </label>
+
+      <h2>Flow</h2>
+      <label class="slider">Reynolds number <output id="re-val">1000</output>
+        <input type="range" id="re-slider" min="2" max="4.5" step="0.01" value="3" />
+      </label>
+      <label class="slider">Inlet velocity (lattice) <output id="u-val">0.080</output>
+        <input type="range" id="u-slider" min="0.02" max="0.15" step="0.005" value="0.08" />
+      </label>
+      <label class="toggle"><input type="checkbox" id="smag-toggle" checked /> Smagorinsky LES (stability)</label>
+
+      <h2>Compute</h2>
+      <div class="seg" id="backend-seg">
+        <button id="btn-cpu" data-backend="cpu">CPU · NumPy</button>
+        <button id="btn-gpu" data-backend="gpu">GPU · CuPy</button>
+      </div>
+      <label class="row">Resolution
+        <select id="res-select">
+          <option value="low">480 × 180</option>
+          <option value="medium" selected>800 × 300</option>
+          <option value="high">1280 × 480</option>
+          <option value="ultra">2048 × 768</option>
+        </select>
+      </label>
+
+      <h2>Display</h2>
+      <label class="row">Field
+        <select id="field-select">
+          <option value="smoke" selected>Smoke streamlines</option>
+          <option value="vorticity">Vorticity ω·c/U</option>
+          <option value="speed">Speed |u|/U</option>
+          <option value="pressure">Pressure Cp</option>
+          <option value="ux">uₓ/U</option>
+          <option value="uy">u_y/U</option>
+        </select>
+      </label>
+      <label class="row">Colormap
+        <select id="cmap-select">
+          <option value="0">Auto</option>
+          <option value="1">Turbo</option>
+          <option value="2">Ice / Fire</option>
+          <option value="3">Inferno</option>
+          <option value="4">Smoke</option>
+        </select>
+      </label>
+
+      <h2 id="smoke-section-title">Smoke Rake & Wand</h2>
+      <div class="seg" id="smoke-mode-seg">
+        <button id="btn-smoke-continuous" class="active" data-mode="continuous">Continuous</button>
+        <button id="btn-smoke-pulsed" data-mode="pulsed">Pulsed</button>
+      </div>
+      <label class="row">Streamlines
+        <select id="smoke-lines-select">
+          <option value="16">16 streams</option>
+          <option value="24">24 streams</option>
+          <option value="28" selected>28 streams</option>
+          <option value="36">36 streams</option>
+          <option value="48">48 streams</option>
+        </select>
+      </label>
+      <div class="row wand-actions">
+        <button id="btn-wand" class="btn btn-sm" title="Toggle interactive smoke wand (or hold Shift on canvas)">🪄 Smoke Wand</button>
+        <button id="btn-clear-smoke" class="btn btn-sm" title="Flush smoke dye from tunnel">🧹 Clear</button>
+      </div>
+
+      <div class="actions">
+        <button id="btn-pause" class="btn">⏸ Pause</button>
+        <button id="btn-reset" class="btn accent">↺ Reset</button>
+      </div>
+    </aside>
+
+    <section class="stats glass">
+      <div class="stat"><span>C<sub>L</sub></span><b id="cl-val">–</b></div>
+      <div class="stat"><span>C<sub>D</sub></span><b id="cd-val">–</b></div>
+      <div class="stat"><span>L/D</span><b id="ld-val">–</b></div>
+      <div class="stat"><span>MLUPS</span><b id="mlups-val">–</b></div>
+      <div class="stat"><span>Step</span><b id="step-val">–</b></div>
+      <div class="stat"><span>τ</span><b id="tau-val">–</b></div>
+      <div class="stat"><span>FPS</span><b id="fps-val">–</b></div>
+      <canvas id="plot-canvas" width="600" height="110"></canvas>
+    </section>
+  </main>
+  <script src="/static/main.js"></script>
+</body>
+</html>
