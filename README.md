@@ -38,6 +38,9 @@ Real-time 2D aerodynamic wind tunnel simulation of NACA airfoils powered by the 
 - **`backend/lbm.py`**: D2Q9 Lattice Boltzmann solver with NumPy/CuPy backends, momentum-exchange force integration, and MacCormack dye advection.
 - **`backend/airfoil.py`**: Analytical NACA 4-digit airfoil equation generator with pivot rotation about quarter-chord ($c/4$).
 - **`backend/server.py`**: FastAPI & WebSocket streaming server with asynchronous background simulation loop.
+- **`DOCUMENTATION/`**:
+  - `physics_description.tex`: Complete mathematical and physical formulation in LaTeX.
+  - `physics_description.pdf`: Compiled 9-page technical reference PDF covering LBM D2Q9 kinetic theory, Chapman-Enskog expansion, Smagorinsky LES closure, momentum exchange forces, and MacCormack dye transport.
 - **`frontend/`**:
   - `index.html`: Modern aerodynamic laboratory control interface.
   - `main.js`: WebGL fragment shaders for field rendering, Canvas 2D overlay for force vectors, pointer interactions, and WebSocket state synchronization.

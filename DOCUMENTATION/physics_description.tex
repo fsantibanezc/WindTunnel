@@ -1,0 +1,369 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{microtype}
+\usepackage{siunitx}
+\usepackage{cite}
+\usepackage{tikz}
+\usepackage{xcolor}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    citecolor=blue!70!black,
+    urlcolor=blue!70!black
+}
+
+\title{\textbf{AeroLab: Physical and Mathematical Foundations of the 2D Lattice Boltzmann Wind Tunnel}}
+\author{\textbf{AeroLab Simulation Framework} \\ High-Performance Computational Aerodynamics}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This document provides a comprehensive mathematical and physical formulation of \textbf{AeroLab}, a real-time, two-dimensional numerical wind tunnel based on the Lattice Boltzmann Method (LBM) with a D2Q9 lattice topology. The document details the kinetic Boltzmann equation, the Bhatnagar-Gross-Krook (BGK) collision operator, Chapman-Enskog multiscale asymptotic analysis recovering the incompressible Navier-Stokes equations, Smagorinsky subgrid-scale (LES) turbulence modeling, aerodynamic boundary conditions, momentum exchange force evaluation for lift ($C_L$) and drag ($C_D$) coefficients, and the MacCormack predictor-corrector transport scheme for high-contrast, anti-diffusive smoke streamline visualization.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Introduction and Governing Equations}
+
+In aerodynamic wind tunnel testing, external flow past an immersed lifting body is governed by the incompressible Navier-Stokes equations expressing conservation of mass and linear momentum:
+\begin{align}
+\nabla \cdot \mathbf{u} &= 0, \label{eq:continuity} \\
+\frac{\partial \mathbf{u}}{\partial t} + (\mathbf{u} \cdot \nabla)\mathbf{u} &= -\frac{1}{\rho_0} \nabla p + \nu \nabla^2 \mathbf{u}, \label{eq:navier_stokes}
+\end{align}
+where $\mathbf{u} = (u_x, u_y)^T$ denotes the macroscopic velocity vector, $p$ is the static pressure field, $\rho_0$ is the reference fluid density, and $\nu$ is the kinematic viscosity.
+
+The fundamental dimensionless parameter governing aerodynamic similarity is the Reynolds number based on the airfoil chord length $c$ and freestream velocity $U_\infty$:
+\begin{equation}
+\mathrm{Re} = \frac{U_\infty c}{\nu}.
+\end{equation}
+
+Rather than discretizing Equations~\eqref{eq:continuity}--\eqref{eq:navier_stokes} via traditional continuum methods (finite differences, finite volumes, or finite elements), AeroLab employs the \textbf{Lattice Boltzmann Method} (LBM). LBM simulates fluid mechanics from a mesoscopic kinetic perspective, solving for the evolution of discrete particle distribution functions whose statistical velocity moments recover the Navier-Stokes equations in the low-Mach, nearly-incompressible limit.
+
+\section{The Lattice Boltzmann Method (LBM D2Q9)}
+
+\subsection{Discrete Boltzmann Equation}
+The core governing equation for the discrete velocity distribution functions $f_i(\mathbf{x}, t)$ along discrete lattice direction $\mathbf{c}_i$ is the discrete Boltzmann equation with the Bhatnagar-Gross-Krook (BGK) single relaxation time approximation:
+\begin{equation}
+f_i(\mathbf{x} + \mathbf{c}_i \Delta t, t + \Delta t) - f_i(\mathbf{x}, t) = -\frac{\Delta t}{\tau} \left[ f_i(\mathbf{x}, t) - f_i^{(0)}(\mathbf{x}, t) \right], \quad i = 0, \dots, 8,
+\label{eq:lbm_bgk}
+\end{equation}
+where $f_i^{(0)}(\mathbf{x}, t)$ is the local Maxwell-Boltzmann equilibrium distribution function, $\Delta t$ is the discrete time step, and $\tau$ is the dimensionless relaxation time parameter.
+
+Equation~\eqref{eq:lbm_bgk} is typically split into two distinct, highly parallelizable operations:
+\begin{enumerate}
+    \item \textbf{Collision}:
+    \begin{equation}
+    f_i^*(\mathbf{x}, t) = f_i(\mathbf{x}, t) - \frac{1}{\tau} \left[ f_i(\mathbf{x}, t) - f_i^{(0)}(\mathbf{x}, t) \right].
+    \end{equation}
+    \item \textbf{Streaming}:
+    \begin{equation}
+    f_i(\mathbf{x} + \mathbf{c}_i \Delta t, t + \Delta t) = f_i^*(\mathbf{x}, t).
+    \end{equation}
+\end{enumerate}
+
+\subsection{D2Q9 Velocity Topology and Weights}
+The two-dimensional nine-velocity (D2Q9) lattice model comprises one rest particle, four orthogonal nearest-neighbor particles, and four diagonal next-nearest-neighbor particles:
+\begin{equation}
+\mathbf{c}_i = \begin{cases}
+(0, 0), & i = 0, \\
+\left(\cos \frac{(i-1)\pi}{2}, \, \sin \frac{(i-1)\pi}{2}\right) c, & i = 1, 2, 3, 4, \\
+\sqrt{2}\left(\cos \left[\frac{(i-5)\pi}{2} + \frac{\pi}{4}\right], \, \sin \left[\frac{(i-5)\pi}{2} + \frac{\pi}{4}\right]\right) c, & i = 5, 6, 7, 8,
+\end{cases}
+\end{equation}
+where $c = \Delta x / \Delta t = 1$ in standard lattice units. Specifically:
+\begin{equation}
+\mathbf{C} = \begin{bmatrix}
+0 & 1 & 0 & -1 & 0 & 1 & -1 & -1 & 1 \\
+0 & 0 & 1 & 0 & -1 & 1 & 1 & -1 & -1
+\end{bmatrix}^T.
+\end{equation}
+
+The corresponding lattice weights $w_i$, derived from Hermite polynomial quadrature of the continuous Maxwellian, are:
+\begin{equation}
+w_i = \begin{cases}
+\frac{4}{9}, & i = 0, \\[4pt]
+\frac{1}{9}, & i = 1, 2, 3, 4, \\[4pt]
+\frac{1}{36}, & i = 5, 6, 7, 8.
+\end{cases}
+\end{equation}
+
+The lattice speed of sound $c_s$ satisfies:
+\begin{equation}
+c_s^2 = \frac{1}{3} c^2 = \frac{1}{3} \frac{\Delta x^2}{\Delta t^2}.
+\end{equation}
+
+\subsection{Equilibrium Distribution Function}
+A second-order Taylor-Hermite series expansion of the Maxwellian velocity distribution around zero mean velocity yields the local equilibrium distribution:
+\begin{equation}
+f_i^{(0)}(\rho, \mathbf{u}) = w_i \rho \left[ 1 + \frac{\mathbf{c}_i \cdot \mathbf{u}}{c_s^2} + \frac{(\mathbf{c}_i \cdot \mathbf{u})^2}{2 c_s^4} - \frac{\mathbf{u} \cdot \mathbf{u}}{2 c_s^2} \right].
+\end{equation}
+Substituting $c_s^2 = 1/3$:
+\begin{equation}
+f_i^{(0)}(\rho, \mathbf{u}) = w_i \rho \left[ 1 + 3 (\mathbf{c}_i \cdot \mathbf{u}) + \frac{9}{2} (\mathbf{c}_i \cdot \mathbf{u})^2 - \frac{3}{2} (\mathbf{u} \cdot \mathbf{u}) \right].
+\end{equation}
+
+\subsection{Macroscopic Moments and Equation of State}
+The hydrodynamic conserved macroscopic quantities are the local density $\rho$ and momentum density $\rho \mathbf{u}$:
+\begin{align}
+\rho(\mathbf{x}, t) &= \sum_{i=0}^8 f_i(\mathbf{x}, t), \\
+\rho \mathbf{u}(\mathbf{x}, t) &= \sum_{i=0}^8 \mathbf{c}_i f_i(\mathbf{x}, t).
+\end{align}
+
+The effective thermodynamic pressure follows an ideal gas equation of state:
+\begin{equation}
+p = c_s^2 \rho = \frac{1}{3} \rho.
+\end{equation}
+
+\subsection{Chapman-Enskog Asymptotic Expansion}
+Using a multi-scale asymptotic expansion with small Knudsen number $\epsilon = \Delta t \ll 1$,
+\begin{align}
+f_i &= f_i^{(0)} + \epsilon f_i^{(1)} + \epsilon^2 f_i^{(2)} + \mathcal{O}(\epsilon^3), \\
+\partial_t &= \epsilon \partial_{t_1} + \epsilon^2 \partial_{t_2}, \quad \nabla = \epsilon \nabla_1,
+\end{align}
+one systematically recovers the continuity and Navier-Stokes equations at $\mathcal{O}(\epsilon^2)$, with kinematic viscosity given by:
+\begin{equation}
+\nu = c_s^2 \left( \tau - \frac{1}{2} \right) \Delta t = \frac{2\tau - 1}{6} \Delta t.
+\end{equation}
+For a specified physical Reynolds number $\mathrm{Re}$, chord length $c$, and lattice inlet velocity $U_\infty = u_{\text{in}}$, the relaxation time is computed dynamically as:
+\begin{equation}
+\nu = \frac{u_{\text{in}} c}{\mathrm{Re}}, \quad \tau = 0.5 + 3\nu.
+\end{equation}
+Positivity of physical viscosity requires $\tau > 0.5$.
+
+\section{Turbulence Modeling: Smagorinsky Subgrid-Scale (LES) Model}
+
+At elevated Reynolds numbers, numerical stability of single-relaxation-time LBM can degrade when $\tau \to 0.5$. To ensure robust simulation of high-speed wake turbulence and separated shear layers, AeroLab incorporates the \textbf{Smagorinsky Large Eddy Simulation (LES)} subgrid-scale model.
+
+\subsection{Resolved Strain Rate Tensor}
+In standard continuum LES, unresolved turbulent eddies are represented by an effective eddy viscosity $\nu_t$:
+\begin{equation}
+\nu_t = (C_s \Delta)^2 |\bar{S}|,
+\end{equation}
+where $C_s \approx 0.15$ is the Smagorinsky constant, $\Delta = \Delta x = 1$ is the grid filter width, and $|\bar{S}| = \sqrt{2 \bar{S}_{\alpha\beta} \bar{S}_{\alpha\beta}}$ is the characteristic filtered strain rate tensor:
+\begin{equation}
+\bar{S}_{\alpha\beta} = \frac{1}{2} \left( \frac{\partial u_\alpha}{\partial x_\beta} + \frac{\partial u_\beta}{\partial x_\alpha} \right).
+\end{equation}
+
+\subsection{Non-Equilibrium Stress Tensor Formulation}
+A profound advantage of LBM is that the strain rate tensor does \textbf{not} require spatial finite differences; it is evaluated purely locally from the second-order non-equilibrium moment of the distribution functions:
+\begin{equation}
+\Pi_{\alpha\beta}^{(1)} = \sum_{i=0}^8 c_{i\alpha} c_{i\beta} \left( f_i - f_i^{(0)} \right).
+\end{equation}
+From Chapman-Enskog expansion, the leading-order non-equilibrium tensor is directly proportional to the strain rate:
+\begin{equation}
+\Pi_{\alpha\beta}^{(1)} = -2 \rho c_s^2 \tau_{\text{eff}} \bar{S}_{\alpha\beta}.
+\end{equation}
+Taking the Frobenius norm:
+\begin{equation}
+Q = \sqrt{2 \Pi_{\alpha\beta}^{(1)} \Pi_{\alpha\beta}^{(1)}} = \sqrt{\Pi_{xx}^2 + \Pi_{yy}^2 + 2\Pi_{xy}^2} = 2 \rho c_s^2 \tau_{\text{eff}} |\bar{S}|.
+\end{equation}
+
+\subsection{Effective Relaxation Time Calculation}
+The total effective viscosity is the sum of molecular and subgrid eddy viscosities:
+\begin{equation}
+\nu_{\text{eff}} = \nu_0 + \nu_t = c_s^2 \left(\tau_{\text{eff}} - \frac{1}{2}\right).
+\end{equation}
+Substituting $\nu_t = C_s^2 |\bar{S}| = C_s^2 \frac{Q}{2 \rho c_s^2 \tau_{\text{eff}}}$ leads to a closed quadratic equation for $\tau_{\text{eff}}$:
+\begin{equation}
+\tau_{\text{eff}} = \tau_0 + \frac{C_s^2 Q}{2 \rho c_s^4 \tau_{\text{eff}}}.
+\end{equation}
+Solving the positive root of this quadratic equation yields:
+\begin{equation}
+\tau_{\text{eff}} = \frac{1}{2} \left[ \tau_0 + \sqrt{\tau_0^2 + 18 \sqrt{2} \, C_s^2 \frac{Q}{\rho}} \right].
+\end{equation}
+This local adaptation ensures that wherever turbulent shearing $Q$ increases, $\tau_{\text{eff}}$ increases safely away from the $0.5$ singularity, guaranteeing unconditional numerical stability.
+
+\section{Boundary Conditions}
+
+\subsection{Inflow Boundary Condition (Inlet at $x=0$)}
+At the wind tunnel inlet ($x = 0$), uniform horizontal freestream velocity $\mathbf{u}_{\text{in}} = (U_\infty, 0)$ is prescribed. An equilibrium Dirichlet boundary condition is applied across all incoming directions ($i \in \{1, 5, 8\}$):
+\begin{equation}
+f_i(0, y, t) = f_i^{(0)}(\rho=1.0, u_x=U_\infty, u_y=0).
+\end{equation}
+
+\subsection{Outflow Boundary Condition (Outlet at $x=L_x$)}
+At the tunnel outlet ($x = L_x$), a convective zero-gradient boundary condition allows vortices and pressure waves to exit without reflection back into the test section:
+\begin{equation}
+f_i(L_x, y, t) = f_i(L_x - 1, y, t), \quad \forall i.
+\end{equation}
+
+\subsection{Tunnel Sidewalls ($y=0$ and $y=L_y$)}
+To model an unconfined wind tunnel test section without artificial boundary layer growth, top and bottom walls employ free-slip symmetry conditions:
+\begin{align}
+f_{\text{UP}}(x, 0, t) &= f_{\text{DOWN}}(x, 0, t), \quad \text{at bottom wall } y = 0, \\
+f_{\text{DOWN}}(x, L_y, t) &= f_{\text{UP}}(x, L_y, t), \quad \text{at top wall } y = L_y,
+\end{align}
+where mirror pairs exchange populations: $(2 \leftrightarrow 4)$, $(5 \leftrightarrow 8)$, $(6 \leftrightarrow 7)$.
+
+\subsection{Airfoil No-Slip Wall: Half-Way Bounce-Back}
+On the solid boundaries of the airfoil $\Omega_s$, the no-slip condition ($\mathbf{u} = 0$) is enforced via the half-way bounce-back scheme. When a streaming particle encounters a solid node, its momentum is exactly reversed into the conjugate direction:
+\begin{equation}
+f_{\bar{i}}(\mathbf{x}_b, t + \Delta t) = f_i^*(\mathbf{x}_b, t),
+\end{equation}
+where $\mathbf{c}_{\bar{i}} = -\mathbf{c}_i$ corresponds to the opposite velocity index mapping:
+\begin{equation}
+\mathrm{OPP} = [0, 3, 4, 1, 2, 7, 8, 5, 6].
+\end{equation}
+
+\section{Aerodynamic Force and Coefficient Evaluation}
+
+\subsection{Momentum Exchange Method (MEM)}
+The aerodynamic forces exerted on the immersed airfoil are calculated directly using the \textbf{Momentum Exchange Method}. At every solid node $\mathbf{x}_b \in \Omega_s$, fluid packets transfer net linear momentum during bounce-back:
+\begin{equation}
+\Delta \mathbf{p}(\mathbf{x}_b, t) = \mathbf{c}_i f_i^*(\mathbf{x}_b, t) - \mathbf{c}_{\bar{i}} f_{\bar{i}}(\mathbf{x}_b, t+\Delta t) = 2 \mathbf{c}_i f_i^*(\mathbf{x}_b, t).
+\end{equation}
+Summing over all solid nodes and incoming directions yields the total hydrodynamic force vector:
+\begin{equation}
+\mathbf{F}(t) = \sum_{\mathbf{x}_b \in \Omega_s} \sum_{i=1}^8 2 \mathbf{c}_i f_i^*(\mathbf{x}_b, t).
+\end{equation}
+In wind-tunnel axes aligned with the $+x$ freestream direction:
+\begin{align}
+\text{Total Drag Force: } & D = F_x, \\
+\text{Total Lift Force: } & L = F_y.
+\end{align}
+
+\subsection{Dimensionless Aerodynamic Coefficients}
+The dynamic pressure per unit length is:
+\begin{equation}
+q_\infty = \frac{1}{2} \rho_0 U_\infty^2 c.
+\end{equation}
+The instantaneous aerodynamic coefficients are:
+\begin{equation}
+C_L = \frac{L}{q_\infty} = \frac{F_y}{\frac{1}{2} \rho_0 U_\infty^2 c}, \quad
+C_D = \frac{D}{q_\infty} = \frac{F_x}{\frac{1}{2} \rho_0 U_\infty^2 c}, \quad
+C_R = \sqrt{C_L^2 + C_D^2}.
+\end{equation}
+
+\subsection{Surface Pressure Coefficient ($C_p$)}
+The local dimensionless surface pressure coefficient $C_p$ is derived from the local density variation $\rho - \rho_0$:
+\begin{equation}
+C_p = \frac{p - p_\infty}{\frac{1}{2} \rho_0 U_\infty^2} = \frac{\frac{1}{3}(\rho - 1)}{\frac{1}{2} U_\infty^2}.
+\end{equation}
+At the stagnation point where $\mathbf{u} = 0$, Bernoulli's equation dictates $C_p = 1.0$.
+
+\section{Smoke Streamline Transport: MacCormack Scheme}
+
+To visualize streamlines and shedding wake streaklines with high fidelity, a conserved passive scalar field $\phi(\mathbf{x}, t) \in [0, 1]$ (smoke dye concentration) is advected by the local flow field:
+\begin{equation}
+\frac{\partial \phi}{\partial t} + \mathbf{u} \cdot \nabla \phi = 0.
+\end{equation}
+
+\subsection{The MacCormack Predictor-Corrector Anti-Diffusion Scheme}
+Standard first-order semi-Lagrangian advection suffers from significant numerical diffusion:
+\begin{equation}
+\phi_{\text{diff}}(\mathbf{x}) \approx \phi(\mathbf{x} - \mathbf{u}\Delta t) = \phi(\mathbf{x}) - \Delta t (\mathbf{u}\cdot\nabla)\phi + \frac{\Delta t^2}{2} (\mathbf{u}\cdot\nabla)^2 \phi + \mathcal{O}(\Delta x),
+\end{equation}
+which turns sharp streamlines into a milky, washed-out fog.
+
+AeroLab replaces standard upwinding with a second-order \textbf{MacCormack predictor-corrector transport scheme}:
+\begin{enumerate}
+    \item \textbf{Forward Predictor}: Advect the dye forward along the velocity field:
+    \begin{equation}
+    \phi^* = \mathcal{S}(\phi^n, \, \mathbf{u}\Delta t),
+    \end{equation}
+    where $\mathcal{S}(\phi, \mathbf{d})$ denotes bilinear interpolation sampling at $\mathbf{x} - \mathbf{d}$.
+    \item \textbf{Backward Reverser}: Advect the predicted field backward along $-\mathbf{u}\Delta t$:
+    \begin{equation}
+    \phi^{**} = \mathcal{S}(\phi^*, \, -\mathbf{u}\Delta t).
+    \end{equation}
+    \item \textbf{Error Estimation and Compensation}:
+    The numerical error accumulated over the forward-backward cycle is $\mathcal{E} = \frac{1}{2}(\phi^n - \phi^{**})$. We construct the compensated intermediate field:
+    \begin{equation}
+    \phi^c = \operatorname{clip}\left(\phi^n + \frac{1}{2}(\phi^n - \phi^{**}), \, 0.0, \, 1.0\right).
+    \end{equation}
+    \item \textbf{Final Forward Advection}:
+    \begin{equation}
+    \phi^{n+1} = \mathcal{S}(\phi^c, \, \mathbf{u}\Delta t) \times \gamma_{\text{decay}},
+    \end{equation}
+    where $\gamma_{\text{decay}} = 0.9995$ is a subtle background dissipation factor that purges residual accumulation while preserving razor-sharp cores.
+\end{enumerate}
+
+\subsection{Gaussian Injector Rake and Interactive Wand}
+At the inlet ($x = 0$), discrete dye injectors with Gaussian profiles prevent pixelation artifacts:
+\begin{equation}
+\phi_{\text{inlet}}(y) = \sum_{k=1}^{N_{\text{lines}}} \exp\left( -\frac{(y - y_k)^2}{2\sigma^2} \right), \quad \sigma = \max(1.1, \, 0.12 \Delta y_{\text{lines}}).
+\end{equation}
+In pulsed mode, injection is periodically modulated:
+\begin{equation}
+\phi_{\text{inject}}(t) = \begin{cases}
+1, & (n_{\text{step}} \bmod 24) < 11, \\
+0, & \text{otherwise.}
+\end{cases}
+\end{equation}
+For the interactive smoke wand positioned at user coordinates $(x_w, y_w)$:
+\begin{equation}
+\phi_{\text{wand}}(x, y) = 0.9 \exp\left( -\frac{(x - x_w)^2 + (y - y_w)^2}{2 r_w^2} \right).
+\end{equation}
+
+\section{NACA 4-Digit Airfoil Geometry}
+
+The geometry of the immersed lifting surface is parameterized by the standard NACA 4-digit designation ($MPXX$):
+\begin{itemize}
+    \item $M$: Maximum camber ($m = M / 100$).
+    \item $P$: Location of maximum camber ($p = P / 10$).
+    \item $XX$: Maximum thickness as percentage of chord ($t = XX / 100$).
+\end{itemize}
+
+\subsection{Thickness Distribution}
+The symmetrical half-thickness distribution $y_t(x)$ along the chord coordinate $x/c \in [0, 1]$ is:
+\begin{equation}
+y_t(x) = 5 t c \left[ 0.2969 \sqrt{\frac{x}{c}} - 0.1260 \left(\frac{x}{c}\right) - 0.3516 \left(\frac{x}{c}\right)^2 + 0.2843 \left(\frac{x}{c}\right)^3 - 0.1036 \left(\frac{x}{c}\right)^4 \right].
+\end{equation}
+
+\subsection{Mean Camber Line}
+For cambered profiles ($m > 0, p > 0$):
+\begin{equation}
+y_c(x) = \begin{cases}
+\frac{m}{p^2} \left[ 2p\left(\frac{x}{c}\right) - \left(\frac{x}{c}\right)^2 \right] c, & 0 \le \frac{x}{c} < p, \\[8pt]
+\frac{m}{(1-p)^2} \left[ (1-2p) + 2p\left(\frac{x}{c}\right) - \left(\frac{x}{c}\right)^2 \right] c, & p \le \frac{x}{c} \le 1.
+\end{cases}
+\end{equation}
+
+\subsection{Quarter-Chord Pivot Rotation}
+To accurately model the aerodynamic center and angle of attack $\alpha$, the airfoil coordinates are rotated around its quarter-chord pivot point:
+\begin{equation}
+\mathbf{x}_q = \left(x_{\text{le}} + 0.25c, \, y_{\text{le}}\right).
+\end{equation}
+Any lattice node $(X, Y)$ is transformed into the un-rotated airfoil frame $(x_r, y_r)$ via:
+\begin{align}
+x_r &= (X - x_q) \cos\alpha - (Y - y_q) \sin\alpha, \\
+y_r &= (X - x_q) \sin\alpha + (Y - y_q) \cos\alpha.
+\end{align}
+A node is flagged as solid ($\Omega_s = \text{True}$) if:
+\begin{equation}
+0 \le x_r + 0.25c \le c \quad \text{and} \quad |y_r - y_c(x_r)| \le y_t(x_r).
+\end{equation}
+
+\section{Summary of Parameters and Units}
+
+\begin{table}[htbp]
+\centering
+\caption{Key physical and numerical parameters in AeroLab.}
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Symbol} & \textbf{Physical Meaning} & \textbf{Typical Value} & \textbf{Units} \\ \midrule
+$N_x \times N_y$ & Grid resolution (medium) & $800 \times 300$ & Lattice nodes \\
+$c$ & Airfoil chord length & $0.16 \times N_x \approx 128$ & Lattice spacing $\Delta x$ \\
+$U_\infty$ & Lattice inlet velocity & $0.08$ & Lattice velocity $\Delta x / \Delta t$ \\
+$\mathrm{Re}$ & Reynolds number & $1000 - 30000$ & Dimensionless \\
+$\tau$ & BGK relaxation time & $> 0.501$ & Lattice time steps $\Delta t$ \\
+$c_s$ & Speed of sound in D2Q9 & $1/\sqrt{3} \approx 0.577$ & Lattice velocity \\
+$C_s$ & Smagorinsky constant & $0.15$ & Dimensionless \\
+$C_L, C_D$ & Sectional lift and drag & Computed dynamically & Dimensionless \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Conclusion}
+The combination of D2Q9 Lattice Boltzmann kinetics, Smagorinsky subgrid-scale turbulence closure, momentum exchange boundary force integration, and MacCormack anti-diffusive advection provides AeroLab with a rigorous, physically validated foundation capable of reproducing complex aerodynamic phenomena---such as boundary layer separation, stall vortex shedding, and dynamic force responses---in real time at high lattice throughput.
+
+\end{document}
