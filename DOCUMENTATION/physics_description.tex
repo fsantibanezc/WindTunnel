@@ -18,15 +18,15 @@
     urlcolor=blue!70!black
 }
 
-\title{\textbf{AeroLab: Physical and Mathematical Foundations of the 2D Lattice Boltzmann Wind Tunnel}}
-\author{\textbf{AeroLab Simulation Framework} \\ High-Performance Computational Aerodynamics}
+\title{\textbf{WindTunnel lab: Physical and Mathematical Foundations of the 2D Lattice Boltzmann Wind Tunnel}}
+\author{\textbf{North Carolina School of Science and Mathematics (NCSSM)} \\ High-Performance Computational Aerodynamics Laboratory}
 \date{\today}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-This document provides a comprehensive mathematical and physical formulation of \textbf{AeroLab}, a real-time, two-dimensional numerical wind tunnel based on the Lattice Boltzmann Method (LBM) with a D2Q9 lattice topology. The document details the kinetic Boltzmann equation, the Bhatnagar-Gross-Krook (BGK) collision operator, Chapman-Enskog multiscale asymptotic analysis recovering the incompressible Navier-Stokes equations, Smagorinsky subgrid-scale (LES) turbulence modeling, aerodynamic boundary conditions, momentum exchange force evaluation for lift ($C_L$) and drag ($C_D$) coefficients, and the MacCormack predictor-corrector transport scheme for high-contrast, anti-diffusive smoke streamline visualization.
+This document provides a comprehensive mathematical and physical formulation of \textbf{WindTunnel lab}, a real-time, two-dimensional numerical wind tunnel developed at NCSSM based on the Lattice Boltzmann Method (LBM) with a D2Q9 lattice topology. The document details the kinetic Boltzmann equation, the Bhatnagar-Gross-Krook (BGK) collision operator, Chapman-Enskog multiscale asymptotic analysis recovering the incompressible Navier-Stokes equations, Smagorinsky subgrid-scale (LES) turbulence modeling, aerodynamic boundary conditions, momentum exchange force evaluation for lift ($C_L$) and drag ($C_D$) coefficients, and the MacCormack predictor-corrector transport scheme for high-contrast, anti-diffusive smoke streamline visualization.
 \end{abstract}
 
 \tableofcontents
@@ -46,7 +46,7 @@ The fundamental dimensionless parameter governing aerodynamic similarity is the 
 \mathrm{Re} = \frac{U_\infty c}{\nu}.
 \end{equation}
 
-Rather than discretizing Equations~\eqref{eq:continuity}--\eqref{eq:navier_stokes} via traditional continuum methods (finite differences, finite volumes, or finite elements), AeroLab employs the \textbf{Lattice Boltzmann Method} (LBM). LBM simulates fluid mechanics from a mesoscopic kinetic perspective, solving for the evolution of discrete particle distribution functions whose statistical velocity moments recover the Navier-Stokes equations in the low-Mach, nearly-incompressible limit.
+Rather than discretizing Equations~\eqref{eq:continuity}--\eqref{eq:navier_stokes} via traditional continuum methods (finite differences, finite volumes, or finite elements), WindTunnel lab employs the \textbf{Lattice Boltzmann Method} (LBM). LBM simulates fluid mechanics from a mesoscopic kinetic perspective, solving for the evolution of discrete particle distribution functions whose statistical velocity moments recover the Navier-Stokes equations in the low-Mach, nearly-incompressible limit.
 
 \section{The Lattice Boltzmann Method (LBM D2Q9)}
 
@@ -141,7 +141,7 @@ Positivity of physical viscosity requires $\tau > 0.5$.
 
 \section{Turbulence Modeling: Smagorinsky Subgrid-Scale (LES) Model}
 
-At elevated Reynolds numbers, numerical stability of single-relaxation-time LBM can degrade when $\tau \to 0.5$. To ensure robust simulation of high-speed wake turbulence and separated shear layers, AeroLab incorporates the \textbf{Smagorinsky Large Eddy Simulation (LES)} subgrid-scale model.
+At elevated Reynolds numbers, numerical stability of single-relaxation-time LBM can degrade when $\tau \to 0.5$. To ensure robust simulation of high-speed wake turbulence and separated shear layers, WindTunnel lab incorporates the \textbf{Smagorinsky Large Eddy Simulation (LES)} subgrid-scale model.
 
 \subsection{Resolved Strain Rate Tensor}
 In standard continuum LES, unresolved turbulent eddies are represented by an effective eddy viscosity $\nu_t$:
@@ -250,6 +250,30 @@ C_p = \frac{p - p_\infty}{\frac{1}{2} \rho_0 U_\infty^2} = \frac{\frac{1}{3}(\rh
 \end{equation}
 At the stagnation point where $\mathbf{u} = 0$, Bernoulli's equation dictates $C_p = 1.0$.
 
+\subsection{Unsteady Vortex Shedding, Cycle Averaging, and Stall Characterization}
+Beyond the linear pre-stall regime ($\alpha > \alpha_{\text{stall}} \approx 13^\circ - 16^\circ$), boundary layer separation occurs over the suction surface, giving rise to an unsteady periodic K\'{a}rm\'{a}n vortex shedding street in the wake. Under these separated conditions, the instantaneous lift coefficient exhibits periodic or quasi-periodic fluctuations about a mean:
+\begin{equation}
+C_L(t) = \overline{C_L} + \Delta C_L \sin(\omega_s t + \psi) + \sum_{k=2}^\infty A_k \sin(k \omega_s t + \psi_k),
+\label{eq:cl_fluctuation}
+\end{equation}
+where $\Delta C_L$ is the vortex shedding fluctuation amplitude, $\omega_s = 2\pi f_s$ is the shedding angular frequency, and $\psi$ is an arbitrary initial phase. The fundamental shedding frequency $f_s$ scales with the projected frontal height $h_{\text{proj}} = c \sin\alpha$ and freestream velocity $U_\infty$ according to the Strouhal number:
+\begin{equation}
+\mathrm{St} = \frac{f_s c \sin\alpha}{U_\infty} \approx 0.18 - 0.20.
+\end{equation}
+
+When student data acquisition relies on a single instantaneous snapshot sample $C_L(t_0)$, the measured value depends strongly on the phase $\psi(t_0) \in [0, 2\pi)$ at the instant the operator triggers the acquisition. Because post-stall shedding amplitudes can reach $\Delta C_L \approx \pm 0.3 - 0.5$, raw instantaneous samples exhibit severe scatter that destroys the coherence of the aerodynamic polar ($C_L \text{ vs. } \alpha$) and obscures the stall peak.
+
+To eliminate phase variance, WindTunnel lab implements a \textbf{Cycle-Averaged Data Acquisition (DAQ) Burst}. When triggered, the system samples a 5.0-second burst ($N \approx 200$ simulation frames at 40 FPS), applies a 3-point filter to suppress high-frequency lattice noise, detects local extrema (peaks and troughs), and integrates over integer shedding cycles:
+\begin{equation}
+\overline{C_L} = \frac{1}{t_K - t_1} \int_{t_1}^{t_K} C_L(t) \, dt \approx \frac{1}{K - 1} \sum_{k=1}^{K-1} \left( \frac{1}{i_{k+1} - i_k} \sum_{j=i_k}^{i_{k+1}-1} C_{L, j} \right),
+\end{equation}
+where $t_1$ and $t_K$ correspond to the first and last detected shedding peaks. Because the integration domain spans exact integer cycles, the periodic fluctuating harmonic vanishes identically:
+\begin{equation}
+\int_{t_1}^{t_K} \sin(\omega_s t + \psi) \, dt \equiv 0.
+\end{equation}
+
+In addition to the cycle-mean $\overline{C_L}$ and $\overline{C_D}$, the acquisition protocol records the physical oscillation envelope $[C_{L,\min}, C_{L,\max}]$, fluctuation amplitude $\Delta C_L = (C_{L,\max} - C_{L,\min})/2$, and standard deviation $\sigma_{C_L}$. In the user interface and polar plot, this is visualized as vertical error whiskers and translucent confidence bands, preserving both the clean mean stall curve and the quantitative magnitude of wake turbulence.
+
 \section{Smoke Streamline Transport: MacCormack Scheme}
 
 To visualize streamlines and shedding wake streaklines with high fidelity, a conserved passive scalar field $\phi(\mathbf{x}, t) \in [0, 1]$ (smoke dye concentration) is advected by the local flow field:
@@ -264,7 +288,7 @@ Standard first-order semi-Lagrangian advection suffers from significant numerica
 \end{equation}
 which turns sharp streamlines into a milky, washed-out fog.
 
-AeroLab replaces standard upwinding with a second-order \textbf{MacCormack predictor-corrector transport scheme}:
+WindTunnel lab replaces standard upwinding with a second-order \textbf{MacCormack predictor-corrector transport scheme}:
 \begin{enumerate}
     \item \textbf{Forward Predictor}: Advect the dye forward along the velocity field:
     \begin{equation}
@@ -347,12 +371,13 @@ A node is flagged as solid ($\Omega_s = \text{True}$) if:
 
 \begin{table}[htbp]
 \centering
-\caption{Key physical and numerical parameters in AeroLab.}
+\caption{Key physical and numerical parameters in WindTunnel lab.}
 \begin{tabular}{@{}llll@{}}
 \toprule
 \textbf{Symbol} & \textbf{Physical Meaning} & \textbf{Typical Value} & \textbf{Units} \\ \midrule
 $N_x \times N_y$ & Grid resolution (medium) & $800 \times 300$ & Lattice nodes \\
 $c$ & Airfoil chord length & $0.16 \times N_x \approx 128$ & Lattice spacing $\Delta x$ \\
+$\alpha$ & Angle of attack (AoA) & $-20^\circ \text{ to } +35^\circ$ & Degrees \\
 $U_\infty$ & Lattice inlet velocity & $0.08$ & Lattice velocity $\Delta x / \Delta t$ \\
 $\mathrm{Re}$ & Reynolds number & $1000 - 30000$ & Dimensionless \\
 $\tau$ & BGK relaxation time & $> 0.501$ & Lattice time steps $\Delta t$ \\
@@ -363,7 +388,23 @@ $C_L, C_D$ & Sectional lift and drag & Computed dynamically & Dimensionless \\
 \end{tabular}
 \end{table}
 
+\section{Cloud Deployment and Google Colab Architecture}
+
+To democratize computational aerodynamics education and eliminate the barrier of local GPU hardware requirements, WindTunnel lab includes a turnkey cloud integration targeting \textbf{Google Colab}.
+
+\subsection{Architectural Challenge: Real-Time WebSockets}
+In standard web deployments, reverse proxies route standard HTTP request-response cycles. However, WindTunnel lab streams 16-bit scalar lattice fields and dynamic force vectors at 30--40~FPS over a bidirectional WebSocket (\texttt{/ws}). Google Colab's native container proxy (\texttt{google.colab.kernel.proxyPort}) is restricted to standard HTTP/REST traffic and fails to negotiate the \texttt{101 Switching Protocols} handshake necessary for continuous binary WebSockets.
+
+\subsection{Cloudflare Tunnel Integration}
+To provide students with a zero-configuration, secure, high-bandwidth communication pipeline, the deployment architecture couples the Uvicorn/FastAPI backend with a transient \textbf{Cloudflare Tunnel} (\texttt{cloudflared}). When the Colab notebook executes:
+\begin{enumerate}
+    \item The LBM solver initializes in an asynchronous worker thread utilizing the allocated NVIDIA GPU (e.g., Tesla T4 or L4) via CuPy.
+    \item The FastAPI server binds locally to \texttt{http://127.0.0.1:8000}.
+    \item A background \texttt{cloudflared} agent opens a multiplexed secure tunnel to Cloudflare edge nodes, routing an ephemeral public HTTPS/WSS URL (e.g., \texttt{https://*.trycloudflare.com}) directly to the local server.
+\end{enumerate}
+Because the frontend automatically synchronizes with \texttt{window.location.protocol} (\texttt{https:} $\to$ \texttt{wss:}), the WebGL client establishes a persistent low-latency binary stream. This enables students on any device (chromebooks, laptops, tablets) to independently execute laboratory measurements, map lift-drag polars, and export CSV stall datasets directly to their local machines without any local software installation.
+
 \section{Conclusion}
-The combination of D2Q9 Lattice Boltzmann kinetics, Smagorinsky subgrid-scale turbulence closure, momentum exchange boundary force integration, and MacCormack anti-diffusive advection provides AeroLab with a rigorous, physically validated foundation capable of reproducing complex aerodynamic phenomena---such as boundary layer separation, stall vortex shedding, and dynamic force responses---in real time at high lattice throughput.
+The combination of D2Q9 Lattice Boltzmann kinetics, Smagorinsky subgrid-scale turbulence closure, momentum exchange boundary force integration, MacCormack anti-diffusive advection, and cloud-native Colab deployment provides WindTunnel lab with a rigorous, physically validated foundation capable of reproducing complex aerodynamic phenomena---such as boundary layer separation, stall vortex shedding, and dynamic force responses---in real time at high lattice throughput.
 
 \end{document}

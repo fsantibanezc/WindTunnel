@@ -1,6 +1,19 @@
-# AeroLab · 2D Airfoil Wind Tunnel
+# <img src="frontend/ncssm_logo.jpg" alt="NCSSM Logo" height="38" style="vertical-align: middle; margin-right: 8px; border-radius: 6px;" /> WindTunnel lab · 2D Airfoil Wind Tunnel
 
-Real-time 2D aerodynamic wind tunnel simulation of NACA airfoils powered by the Lattice Boltzmann Method (LBM D2Q9), featuring GPU acceleration, interactive WebGL visualization, MacCormack anti-diffusion smoke streamlines, and dynamic force vector overlays.
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fsantibanezc/WindTunnel/blob/main/WindTunnel_Lab_Colab.ipynb)
+
+Real-time 2D aerodynamic wind tunnel simulation of NACA airfoils powered by the Lattice Boltzmann Method (LBM D2Q9), featuring GPU acceleration, interactive WebGL visualization, MacCormack anti-diffusion smoke streamlines, dynamic force vector overlays, and student stall polar data acquisition.
+
+---
+
+## ⚡ Run Instantly on Google Colab (Zero-Install Cloud GPU)
+
+For students, classrooms, or anyone without a local GPU, **WindTunnel lab** can be launched in one click on Google Colab:
+
+1. Click the **[Open in Colab](https://colab.research.google.com/github/fsantibanezc/WindTunnel/blob/main/WindTunnel_Lab_Colab.ipynb)** badge.
+2. In Colab, select **Runtime** ➔ **Change runtime type** ➔ **T4 GPU** (free tier).
+3. Run **Step 1** to set up the environment and **Step 2** to launch the server and Cloudflare tunnel.
+4. Click the generated **`🚀 Open WindTunnel lab ↗`** link to access the interactive wind tunnel in your browser.
 
 ---
 
@@ -25,30 +38,40 @@ Real-time 2D aerodynamic wind tunnel simulation of NACA airfoils powered by the 
     - **Force Parallelogram**: Dashed projection lines completing the orthogonal force decomposition.
   - Adjustable vector scale slider ($0.2\times$ to $3.0\times$) with automatic screen-edge clamping.
 
-- **Interactive Aerodynamic Diagnostics**:
-  - Live strip chart tracking $C_L$ and $C_D$ over time.
-  - Instant parameter tuning: NACA 4-digit geometry, Angle of Attack ($\alpha \in [-15^\circ, +25^\circ]$), Reynolds number ($\mathrm{Re}$), and lattice inlet velocity.
-  - Colormaps: Smoke, Turbo, Ice/Fire (diverging), and Inferno.
-  - Pan & Zoom controls up to $20\times$ magnification.
+- **Interactive Aerodynamic Diagnostics & Stall Lab**:
+  - **Expanded Angle of Attack**: $\alpha \in [-20^\circ, +35^\circ]$ with continuous slider and fine $\pm 0.5^\circ$ stepper buttons (`◀` / `▶` or arrow keys), providing ample span to observe linear pre-stall slope, stall onset, and deep separated vortex shedding.
+  - **Student Data Acquisition (DAQ) & Stall Polar Lab**:
+    - **Live 5s "Acquire" Burst (Hotkey `L`)**: Samples a 5.0-second burst (~200 frames at 40 FPS) with an animated progress bar and live converging mean readout.
+    - **Integer Vortex Shedding Cycle Integration**: Isolates the shedding oscillation wave and integrates over exact integer cycles from peak to peak ($\int \sin(\omega t) dt = 0$), completely eliminating the phase-dependent variation that previously scrambled the stall curve.
+    - **Shedding Oscillation Envelope & Whiskers**: Measures the full dynamic envelope $[C_{L,\min}, C_{L,\max}]$, fluctuation amplitude $\Delta C_L$, and $\sigma_{C_L}$, rendering vertical error whiskers and translucent glow ribbons on the polar diagram.
+    - **Flow Settling Telemetry**: Automatic transient indicator warns when flow is settling following an angle change and lights up green when ready for acquisition.
+    - **Interactive Polar Plot ($C_L$ vs. $\alpha$)**: Real-time graphing connecting true cycle-mean $C_L$ points with thin-airfoil theoretical slope reference ($C_L = 2\pi(\alpha - \alpha_0)$).
+    - **Automated Stall Point Identification**: Identifies $C_{L,\max}$ and $\alpha_{\text{stall}}$ with glowing beacons, axial drop lines, and regime classification tags (*Linear Attached*, *Stall Onset*, *Vortex Shedding*, *Deep Stall*).
+    - **Data Table & Enhanced CSV Export**: Comprehensive tabular viewer with individual point deletion and full-fidelity CSV export including cycle means, oscillation envelopes, cycle counts, and lattice steps for lab reports.
+  - **Live Time-Series Strip Chart**: Real-time rolling chart tracking instantaneous $C_L(t)$ and $C_D(t)$ fluctuations.
+  - **Colormaps**: Smoke streamlines, Turbo, Ice/Fire (diverging), and Inferno.
+  - **Pan & Zoom controls**: Smooth zooming up to $20\times$ magnification and panning.
 
 ---
 
 ## Architecture
 
+- **`WindTunnel_Lab_Colab.ipynb`**: Turnkey Google Colab notebook for running WindTunnel lab on cloud GPUs with Cloudflare tunnel streaming.
 - **`backend/lbm.py`**: D2Q9 Lattice Boltzmann solver with NumPy/CuPy backends, momentum-exchange force integration, and MacCormack dye advection.
 - **`backend/airfoil.py`**: Analytical NACA 4-digit airfoil equation generator with pivot rotation about quarter-chord ($c/4$).
 - **`backend/server.py`**: FastAPI & WebSocket streaming server with asynchronous background simulation loop.
 - **`DOCUMENTATION/`**:
   - `physics_description.tex`: Complete mathematical and physical formulation in LaTeX.
-  - `physics_description.pdf`: Compiled 9-page technical reference PDF covering LBM D2Q9 kinetic theory, Chapman-Enskog expansion, Smagorinsky LES closure, momentum exchange forces, and MacCormack dye transport.
+  - `physics_description.pdf`: Compiled technical reference PDF covering LBM D2Q9 kinetic theory, Chapman-Enskog expansion, Smagorinsky LES closure, momentum exchange forces, and MacCormack dye transport.
 - **`frontend/`**:
   - `index.html`: Modern aerodynamic laboratory control interface.
   - `main.js`: WebGL fragment shaders for field rendering, Canvas 2D overlay for force vectors, pointer interactions, and WebSocket state synchronization.
   - `style.css`: Polished glassmorphism dark mode aesthetic.
+  - `ncssm_logo.jpg`: NCSSM institutional emblem.
 
 ---
 
-## Quickstart
+## Local Quickstart
 
 ### Prerequisites
 - Python 3.12+
@@ -87,7 +110,7 @@ Real-time 2D aerodynamic wind tunnel simulation of NACA airfoils powered by the 
 
 ## Enabling GPU Acceleration (CuPy / CUDA)
 
-AeroLab features high-performance GPU execution via [CuPy](https://cupy.dev/). On modern NVIDIA GPUs (Ampere, Ada Lovelace, Hopper, RTX series), the GPU backend delivers **120–190+ MLUPS** (Million Lattice Updates Per Second), enabling high resolutions ($1280 \times 480$, $2048 \times 768$) to stream fluidly at interactive 40–60 FPS.
+WindTunnel lab features high-performance GPU execution via [CuPy](https://cupy.dev/). On modern NVIDIA GPUs (Ampere, Ada Lovelace, Hopper, RTX series), the GPU backend delivers **120–190+ MLUPS** (Million Lattice Updates Per Second), enabling high resolutions ($1280 \times 480$, $2048 \times 768$) to stream fluidly at interactive 40–60 FPS.
 
 ### 1. Requirements
 - An NVIDIA GPU with CUDA driver installed (`nvidia-smi` working).

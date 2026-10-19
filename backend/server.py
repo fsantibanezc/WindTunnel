@@ -6,10 +6,16 @@ Run:  uv run python backend/server.py   ->  http://localhost:8000
 import asyncio
 import json
 import math
+import sys
 import threading
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
+
+# Ensure backend directory is on sys.path regardless of execution cwd
+BACKEND_DIR = Path(__file__).resolve().parent
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
 
 import numpy as np
 import uvicorn

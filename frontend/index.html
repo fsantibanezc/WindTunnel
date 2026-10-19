@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AeroLab · 2D Airfoil Wind Tunnel</title>
+  <title>WindTunnel lab · 2D Airfoil Wind Tunnel</title>
   <meta name="description" content="Real-time 2D Lattice Boltzmann wind tunnel simulation of NACA airfoils with GPU acceleration and WebGL visualization." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
@@ -12,7 +12,10 @@
 <body>
   <div class="bg-glow"></div>
   <header class="topbar">
-    <h1><span class="logo">◢</span> AeroLab <small>2D Wind Tunnel · LBM D2Q9</small></h1>
+    <div class="brand-group">
+      <img src="/static/ncssm_logo.jpg" alt="NCSSM Logo" class="brand-logo" />
+      <h1>WindTunnel lab <small>2D Wind Tunnel · LBM D2Q9</small></h1>
+    </div>
     <div class="conn" id="conn-status"><span class="dot"></span><span id="conn-text">connecting…</span></div>
   </header>
 
@@ -43,9 +46,17 @@
       <label class="row">NACA 4-digit
         <input type="text" id="naca-input" value="2412" maxlength="4" pattern="\d{4}" />
       </label>
-      <label class="slider">Angle of attack <output id="aoa-val">8.0°</output>
-        <input type="range" id="aoa-slider" min="-15" max="25" step="0.5" value="8" />
-      </label>
+      <div class="slider">
+        <div class="aoa-header">
+          <label class="slider-title" for="aoa-slider">Angle of attack</label>
+          <div class="aoa-ctrl-group">
+            <button id="btn-aoa-dec" class="step-btn" title="Decrease AoA by 0.5° (Left Arrow)">◀</button>
+            <output id="aoa-val">8.0°</output>
+            <button id="btn-aoa-inc" class="step-btn" title="Increase AoA by 0.5° (Right Arrow)">▶</button>
+          </div>
+        </div>
+        <input type="range" id="aoa-slider" min="-20" max="35" step="0.5" value="8" />
+      </div>
       <label class="toggle"><input type="checkbox" id="vec-toggle" checked /> Overlay Force Vectors</label>
       <div class="row vec-suboptions" id="vec-options">
         <label class="toggle toggle-sm"><input type="checkbox" id="vec-comp-toggle" checked /> Lift & Drag</label>
@@ -54,6 +65,30 @@
       <label class="slider slider-sm">Vector scale <output id="vec-scale-val">1.0×</output>
         <input type="range" id="vec-scale-slider" min="0.2" max="3.0" step="0.1" value="1.0" />
       </label>
+
+      <h2>Data Acquisition · Stall Lab</h2>
+      <div class="daq-status-row">
+        <span class="daq-indicator" id="daq-indicator"><span class="flow-dot"></span> <span id="daq-indicator-text">Flow Settling</span></span>
+        <span class="daq-count" id="daq-count">0 pts</span>
+      </div>
+      <div class="daq-actions">
+        <button id="btn-log-point" class="btn btn-sm accent btn-acquire" title="Sample 5s window and compute cycle-averaged CL, CD (Hotkey: L)">
+          <span id="log-btn-text">⏱ Acquire (5s)</span>
+        </button>
+        <button id="btn-clear-daq" class="btn btn-sm" title="Clear all recorded data points">🧹 Clear</button>
+        <button id="btn-export-csv" class="btn btn-sm" title="Download polar data as CSV">💾 CSV</button>
+      </div>
+      <div id="daq-burst-panel" class="daq-burst-panel hidden">
+        <div class="burst-bar"><div id="burst-progress" class="burst-progress-fill"></div></div>
+        <div class="burst-stats">
+          <span id="burst-status-text">Integrating cycles… 0%</span>
+          <span id="burst-live-mean">Mean C<sub>L</sub>: –</span>
+        </div>
+      </div>
+      <div class="stall-badge" id="stall-badge">
+        <span class="stall-badge-label">Stall Analysis:</span>
+        <b class="stall-badge-val" id="stall-summary">Need ≥ 3 pts</b>
+      </div>
 
       <h2>Flow</h2>
       <label class="slider">Reynolds number <output id="re-val">1000</output>
@@ -124,15 +159,65 @@
       </div>
     </aside>
 
-    <section class="stats glass">
-      <div class="stat"><span>C<sub>L</sub></span><b id="cl-val">–</b></div>
-      <div class="stat"><span>C<sub>D</sub></span><b id="cd-val">–</b></div>
-      <div class="stat"><span>L/D</span><b id="ld-val">–</b></div>
-      <div class="stat"><span>MLUPS</span><b id="mlups-val">–</b></div>
-      <div class="stat"><span>Step</span><b id="step-val">–</b></div>
-      <div class="stat"><span>τ</span><b id="tau-val">–</b></div>
-      <div class="stat"><span>FPS</span><b id="fps-val">–</b></div>
-      <canvas id="plot-canvas" width="600" height="110"></canvas>
+    <section class="analysis-panel glass">
+      <div class="stats-header">
+        <div class="stats-indicators">
+          <div class="stat"><span>C<sub>L</sub></span><b id="cl-val">–</b></div>
+          <div class="stat"><span>C<sub>D</sub></span><b id="cd-val">–</b></div>
+          <div class="stat"><span>L/D</span><b id="ld-val">–</b></div>
+          <div class="stat"><span>MLUPS</span><b id="mlups-val">–</b></div>
+          <div class="stat"><span>Step</span><b id="step-val">–</b></div>
+          <div class="stat"><span>τ</span><b id="tau-val">–</b></div>
+          <div class="stat"><span>FPS</span><b id="fps-val">–</b></div>
+        </div>
+        <div class="chart-tab-bar">
+          <button id="tab-polar" class="chart-tab active" data-tab="polar">🎯 Lift vs AoA (Polar & Stall)</button>
+          <button id="tab-strip" class="chart-tab" data-tab="strip">📈 Time Series (t)</button>
+          <button id="tab-table" class="chart-tab" data-tab="table">📋 Data Table (<span id="tab-pt-count">0</span>)</button>
+        </div>
+      </div>
+
+      <div class="chart-viewport-container">
+        <!-- Tab 1: Polar Canvas (Lift vs AoA) -->
+        <div id="polar-view" class="chart-view active">
+          <canvas id="polar-canvas"></canvas>
+          <div class="polar-overlay-legend">
+            <span class="leg-item"><span class="leg-dot cl-dot"></span> Cycle Mean C<sub>L</sub></span>
+            <span class="leg-item"><span class="leg-whisker"></span> Shedding Oscillation (Min–Max)</span>
+            <span class="leg-item"><span class="leg-dot cd-dot"></span> C<sub>D</sub></span>
+            <span class="leg-item"><span class="leg-line theory-line"></span> Theory (2π·α)</span>
+            <span class="leg-item"><span class="leg-dot stall-dot"></span> Stall Point (C<sub>L,max</sub>)</span>
+          </div>
+        </div>
+
+        <!-- Tab 2: Time Series Canvas -->
+        <div id="strip-view" class="chart-view hidden">
+          <canvas id="plot-canvas"></canvas>
+        </div>
+
+        <!-- Tab 3: Data Table View -->
+        <div id="table-view" class="chart-view hidden">
+          <div class="table-scroll">
+            <table class="daq-table" id="daq-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>AoA (α)</th>
+                  <th>Cycle Mean C<sub>L</sub></th>
+                  <th>Shedding Oscillation</th>
+                  <th>Mean C<sub>D</sub></th>
+                  <th>L/D</th>
+                  <th>Flow Regime</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="daq-tbody">
+                <tr class="empty-row"><td colspan="8">No points recorded. Dial an angle and click "Acquire (5s)" (or press L).</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </section>
   </main>
   <script src="/static/main.js"></script>
