@@ -2,6 +2,8 @@
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fsantibanezc/WindTunnel/blob/main/WindTunnel_Lab_Colab.ipynb)
 
+*Developed by F. Santibanez Ph.D. — Honors Aerospace Engineering — NCSSM Connect Program.*
+
 Real-time 2D aerodynamic wind tunnel simulation of NACA airfoils powered by the Lattice Boltzmann Method (LBM D2Q9), featuring GPU acceleration, interactive WebGL visualization, MacCormack anti-diffusion smoke streamlines, dynamic force vector overlays, and student stall polar data acquisition.
 
 ---
@@ -154,6 +156,14 @@ GPU 2048x768 MLUPS=189
 - In the web UI under the **Compute** section:
   - Click **`GPU · CuPy`** or **`CPU · NumPy`** to seamlessly switch backends on the fly without resetting flow state.
   - If no CUDA GPU is detected, the `GPU · CuPy` button is disabled with an explanatory tooltip.
+
+---
+
+## Author & Program Credits
+
+Developed by **F. Santibanez, Ph.D.**  
+Honors Aerospace Engineering  
+North Carolina School of Science and Mathematics (NCSSM) Connect Program
 
 ---
 

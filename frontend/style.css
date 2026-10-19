@@ -25,16 +25,26 @@ body {
 .topbar { display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; }
 .brand-group { display: flex; align-items: center; gap: 14px; }
 .brand-logo {
-  height: 44px; width: 44px; object-fit: contain;
+  height: 46px; width: 46px; object-fit: contain;
   background: #ffffff; border-radius: 9px; padding: 2px;
   box-shadow: 0 4px 16px hsla(0 0% 0% / .4); border: 1px solid hsla(0 0% 100% / .2);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  flex-shrink: 0;
 }
 .brand-logo:hover { transform: scale(1.05); box-shadow: 0 6px 20px hsla(190 95% 55% / .3); }
-h1 { font-weight: 700; font-size: 1.4rem; letter-spacing: .02em; }
-h1 small { font-weight: 300; color: var(--muted); font-size: .85rem; margin-left: 10px; }
+.brand-text { display: flex; flex-direction: column; gap: 2px; }
+.brand-heading { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+h1 { font-weight: 700; font-size: 1.35rem; letter-spacing: .02em; line-height: 1.2; }
+.sub-heading { font-weight: 300; color: var(--muted); font-size: .82rem; }
+.author-tagline {
+  font-size: 0.78rem;
+  color: hsl(190 85% 72%);
+  letter-spacing: 0.02em;
+  font-weight: 500;
+  opacity: 0.95;
+}
 .logo { background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; color: transparent; }
-.conn { display: flex; gap: 8px; align-items: center; font-size: .85rem; color: var(--muted); }
+.conn { display: flex; gap: 8px; align-items: center; font-size: .85rem; color: var(--muted); flex-shrink: 0; }
 .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--warn); box-shadow: 0 0 10px var(--warn); }
 .conn.on .dot { background: hsl(140 80% 55%); box-shadow: 0 0 10px hsl(140 80% 55%); animation: pulse 2s infinite; }
 @keyframes pulse { 50% { opacity: .4; } }
@@ -258,8 +268,19 @@ input[type=text]:focus, select:focus { border-color: var(--accent); }
 .regime-separated { background: hsla(15 90% 60% / .25); color: hsl(15 95% 65%); }
 .empty-row td { text-align: center; color: var(--muted); padding: 30px !important; }
 
+.app-footer {
+  text-align: center;
+  padding: 16px 24px 28px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  border-top: 1px solid var(--border);
+  margin: 0 24px;
+}
+
 @media (max-width: 900px) {
   .layout { grid-template-columns: 1fr; }
   .panel { grid-row: auto; }
   .stats-header { flex-direction: column; align-items: flex-start; }
+  .app-footer { margin: 0 12px; }
 }
