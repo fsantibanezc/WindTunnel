@@ -12,9 +12,8 @@ For students, classrooms, or anyone without a local GPU, **WindTunnel lab** can 
 
 1. Click the **[Open in Colab](https://colab.research.google.com/github/fsantibanezc/WindTunnel/blob/main/WindTunnel_Lab_Colab.ipynb)** badge.
 2. In Colab, select **Runtime** ➔ **Change runtime type** ➔ **T4 GPU** (free tier).
-3. Run **Step 1**: It will prompt for your **GitHub Personal Access Token (PAT)** with read permissions to clone the private repository (or store it under Colab Secrets 🔑 with name `GITHUB_TOKEN` to authenticate automatically).
-4. Run **Step 2**: Launches the simulation backend and creates a secure Cloudflare tunnel.
-5. Click the generated **`🚀 Open WindTunnel lab ↗`** link to access the interactive wind tunnel in your browser.
+3. Run **Step 1** to set up the environment and **Step 2** to launch the simulation server and Cloudflare tunnel.
+4. Click the generated **`🚀 Open WindTunnel lab ↗`** link to access the interactive wind tunnel in your browser.
 
 ---
 
