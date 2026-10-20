@@ -8,35 +8,51 @@
 
 ## 🎯 Mission Briefing & Core Research Objective
 
-In computational aerodynamics and flight testing, **aerodynamic stall** represents the critical boundary where a wing experiences severe loss of lift, surging pressure drag, and unsteady wake shedding due to boundary layer separation. While idealized thin-airfoil theory predicts an unyielding linear lift curve:
-$$C_L(\alpha) = 2\pi(\alpha - \alpha_0)$$
-viscous fluids in real tunnels cannot climb the adverse pressure gradient on the suction surface indefinitely.
-
-Your class is commissioned as an **Aerodynamics Research Consortium** to characterize and map the empirical multi-variable response surface of stall:
+In aerodynamics, **aerodynamic stall** represents the sudden loss of lift and surge in drag when airflow separates from the upper surface of a wing. Using **Dimensional Analysis**, we can show that the critical stall angle does not depend on random combinations of units, but on three fundamental dimensionless parameters: airfoil camber ($m$), thickness ratio ($t/c$), and the Reynolds number ($Re$):
 $$\alpha_{\text{stall}} = \Phi\left(m,\, \frac{t}{c},\, Re\right) \quad \text{and} \quad C_{L,\max} = \Psi\left(m,\, \frac{t}{c},\, Re\right)$$
 
-To achieve this comprehensive parametric exploration, students are divided into **four specialized research divisions**, each isolating one physical axis while holding other controls constant. Following individual team testing, the divisions will pool their data into a master class repository to formulate a unified global scaling law.
+Your class is commissioned as an **Aerodynamics Research Consortium** to characterize and map this empirical response surface using the GPU-accelerated **WindTunnel lab**. Students are divided into **four specialized research divisions**, each isolating one physical axis while holding other controls constant. Following individual team testing, the divisions will pool their data into a master class repository to formulate a unified global scaling law.
 
 ---
 
-## 🔬 Theoretical Foundations
+## 🔬 Dimensional Analysis & The Physics of Stall
 
-### 1. Thin-Airfoil Theory & Camber Shifts
-For an attached, inviscid flow over a slender airfoil, thin-airfoil theory predicts a constant lift slope:
-$$\frac{dC_L}{d\alpha} = 2\pi \approx 6.28\,\text{rad}^{-1} \approx 0.110\,\text{deg}^{-1}$$
-Camber shifts the zero-lift angle $\alpha_0$ to negative angles:
-$$\alpha_0 \approx -k_c \cdot m \quad (k_c \approx 1.10 \text{ rad/unit camber})$$
-where $m$ is the maximum camber ratio (first digit of the NACA 4-digit designation divided by 100).
+### 1. The Physical Problem: What Causes Stall?
+When an airfoil moves through air at an angle of attack $\alpha$, fluid streams smoothly over both surfaces, generating lift. However, as $\alpha$ increases, air flowing over the upper surface must turn sharply around the nose and decelerate into an increasing pressure hill (the *adverse pressure gradient*). At a critical angle called the **stall angle** ($\alpha_{\text{stall}}$), the sluggish air near the surface can no longer overcome this hill. The flow detaches (separates) from the upper surface, forming an unsteady, swirling turbulent wake. Lift collapses, drag surges, and the wing stalls.
 
-### 2. Adverse Pressure Gradients & Boundary Layer Separation
-Viscous dissipation continuously strips near-wall momentum from the fluid as it climbs the adverse pressure gradient downstream of the suction peak ($dp/dx > 0$). When the wall shear stress vanishes:
-$$\tau_w = \left. \mu \frac{\partial u}{\partial y} \right|_{y=0} = 0$$
-the boundary layer separates. The detached shear layer generates massive vorticity shedding and aerodynamic stall.
+### 2. Identifying Physical Variables (Dimensional Matrix)
+Before conducting wind tunnel experiments, aerospace engineers apply **Dimensional Analysis** (the Buckingham $\Pi$ Theorem) to determine the dimensionless groups that govern the physics:
 
-### 3. Governing Parameters
-1. **Airfoil Thickness ($t/c$):** Controls leading-edge nose radius ($r_{\text{le}} \approx 1.1019\,(t/c)^2 c$). Thin airfoils suffer sharp leading-edge suction spikes and abrupt thin-airfoil stall; thicker profiles promote docile trailing-edge stall.
-2. **Airfoil Camber ($m$):** Intensifies suction surface curvature, increasing $C_L$ at a given $\alpha$ but worsening the adverse pressure gradient $dp/dx$.
-3. **Reynolds Number ($Re = U_\infty c / \nu$):** Governs boundary layer energization. Since laminar boundary layer thickness scales as $\delta \propto c / \sqrt{Re}$, higher $Re$ provides greater near-wall momentum, delaying flow detachment to higher angles of attack.
+| Physical Variable | Symbol | SI Units | Dimensions $[M, L, T]$ |
+| :--- | :---: | :---: | :---: |
+| **Stall Angle of Attack** | $\alpha_{\text{stall}}$ | $\text{rad}$ or $\text{deg}$ | $[1]$ (dimensionless) |
+| **Airfoil Chord Length** | $c$ | $\text{m}$ | $[L]$ |
+| **Maximum Camber Height** | $h$ | $\text{m}$ | $[L]$ |
+| **Maximum Thickness** | $t$ | $\text{m}$ | $[L]$ |
+| **Freestream Airspeed** | $U_\infty$ | $\text{m/s}$ | $[L T^{-1}]$ |
+| **Air Density** | $\rho$ | $\text{kg/m}^3$ | $[M L^{-3}]$ |
+| **Air Dynamic Viscosity** | $\mu$ | $\text{Pa}\cdot\text{s}$ | $[M L^{-1} T^{-1}]$ |
+
+### 3. Applying the Buckingham $\Pi$ Theorem
+We have $n = 7$ physical variables expressed in $k = 3$ fundamental dimensions (mass $[M]$, length $[L]$, and time $[T]$). The Buckingham $\Pi$ Theorem proves that the system reduces to exactly $n - k = 7 - 3 = 4$ independent dimensionless groups ($\Pi$-groups):
+
+1. **$\Pi_1 = \alpha_{\text{stall}}$**: The dependent parameter of interest, the critical stall angle (dimensionless).
+2. **$\Pi_2 = \frac{h}{c} = m$**: The **Airfoil Camber Ratio** (maximum camber as a percentage or fraction of chord).
+3. **$\Pi_3 = \frac{t}{c}$**: The **Airfoil Thickness Ratio** (maximum thickness as a percentage or fraction of chord).
+4. **$\Pi_4 = \frac{\rho U_\infty c}{\mu} = \frac{U_\infty c}{\nu} = Re$**: The **Reynolds Number**, scaling fluid inertia (momentum) against viscous friction.
+
+Therefore, dimensional analysis establishes that stall is governed by a universal functional relationship:
+$$\mathbf{\alpha_{\text{stall}} = \Phi\left(m,\, \frac{t}{c},\, Re\right)}$$
+
+During an angle of attack sweep, the dimensionless lift coefficient $C_L = \frac{L}{\frac{1}{2}\rho U_\infty^2 c}$ traces an aerodynamic polar curve:
+$$C_L = g\left(\alpha;\, m,\, \frac{t}{c},\, Re\right)$$
+whose peak identifies $C_{L,\max}$ occurring at $\alpha = \alpha_{\text{stall}}$.
+
+### 4. Physical Intuition Behind Each Dimensionless Parameter
+- **Angle of Attack ($\alpha$):** The operational control variable. In attached flow, lift increases linearly following thin-airfoil theory ($C_L \approx 2\pi(\alpha - \alpha_0)$). As $\alpha$ increases, the suction peak at the leading edge grows sharper until the near-wall flow runs out of energy and separates.
+- **Thickness Ratio ($t/c$):** Controls nose roundness ($r_{\text{le}} \propto (t/c)^2$). A sharp, thin airfoil ($t/c = 6\%$) forces air around an abrupt bend, causing sudden bubble bursting and sharp thin-airfoil stall. A blunt, thicker airfoil ($t/c = 18\%$) smooths out the flow turning, promoting progressive trailing-edge stall and delaying separation to higher angles.
+- **Camber Ratio ($m$):** Curvature shifts the zero-lift angle to negative values ($\alpha_0 \approx -1.1 m$), producing positive lift at $0^\circ$. However, extra upper-surface curvature steepens the adverse pressure hill, affecting stall onset.
+- **Reynolds Number ($Re$):** Measures how fast and energetic the flow is compared to its internal friction. High-$Re$ air has high momentum and thinner boundary layers ($\delta \propto 1/\sqrt{Re}$), enabling it to climb steeper pressure hills without detaching, which delays stall to higher angles.
 
 ---
 
