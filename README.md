@@ -65,6 +65,9 @@ For students, classrooms, or anyone without a local GPU, **WindTunnel lab** can 
 - **`DOCUMENTATION/`**:
   - `physics_description.tex`: Complete mathematical and physical formulation in LaTeX.
   - `physics_description.pdf`: Compiled technical reference PDF covering LBM D2Q9 kinetic theory, Chapman-Enskog expansion, Smagorinsky LES closure, momentum exchange forces, and MacCormack dye transport.
+  - `stall_investigation_assignment.tex`: Turnkey collaborative multi-group laboratory assignment in LaTeX investigating $\alpha_{\text{stall}} = f(\alpha, m, t/c, Re)$ with experimental protocols, test matrices, and rubrics.
+  - `stall_investigation_assignment.pdf`: Compiled publication-grade student assignment PDF ready for printing/distribution.
+  - `stall_investigation_assignment.md`: Markdown version ready for direct import into Canvas, Moodle, or Google Classroom LMS.
 - **`frontend/`**:
   - `index.html`: Modern aerodynamic laboratory control interface.
   - `main.js`: WebGL fragment shaders for field rendering, Canvas 2D overlay for force vectors, pointer interactions, and WebSocket state synchronization.
