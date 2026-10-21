@@ -52,11 +52,11 @@ North Carolina School of Science and Mathematics}
 \maketitle
 
 \begin{tcolorbox}[title=Mission Briefing \& Research Objective, colframe=blue!60!black]
-In aerodynamics, \textbf{stall} represents the sudden loss of lift and surge in drag when airflow separates from the upper surface of a wing. Using \textbf{Dimensional Analysis}, we can show that the critical stall angle depends on three fundamental dimensionless parameters: airfoil camber ($m$), thickness ratio ($t/c$), and the Reynolds number ($Re$):
+In aerodynamics, \textbf{stall} represents the sudden loss of lift and surge in drag when airflow separates from the upper surface of a wing. Using \textbf{Dimensional Analysis}, we can show that the critical stall angle depends on three fundamental dimensionless parameters: airfoil thickness ratio ($t/c$), camber ($m$), and the Reynolds number ($Re$):
 \begin{equation}
-\alpha_{\text{stall}} = \Phi\left(m,\, \frac{t}{c},\, Re\right), \quad \text{and the peak lift capability} \quad C_{L,\max} = \Psi\left(m,\, \frac{t}{c},\, Re\right).
+\alpha_{\text{stall}} = \Phi\left(\frac{t}{c},\, m,\, Re\right), \quad \text{and the peak lift capability} \quad C_{L,\max} = \Psi\left(\frac{t}{c},\, m,\, Re\right).
 \end{equation}
-As an aerospace research consortium, our class will systematically explore this multi-variable relationship using the GPU-accelerated \textbf{WindTunnel lab}. Four specialized student research divisions will each interrogate one parameter, gather high-precision digital telemetry, and collaborate to construct a unified empirical scaling model for aircraft design.
+As an aerospace research consortium, our class will systematically explore this multi-variable relationship using the GPU-accelerated \textbf{WindTunnel lab}. Three specialized student research teams—each dedicated to one governing dimensionless $\Pi$-group—will systematically interrogate their parameter, gather high-precision digital telemetry, and collaborate to construct a unified empirical power-law model for aircraft design.
 \end{tcolorbox}
 
 \section{Dimensional Analysis \& The Aerodynamics of Stall}
@@ -76,8 +76,8 @@ To determine what governs the stall angle $\alpha_{\text{stall}}$, we list every
 \textbf{Physical Variable} & \textbf{Symbol} & \textbf{SI Units} & \textbf{Dimensions} $[M, L, T]$ \\ \midrule
 Stall Angle of Attack & $\alpha_{\text{stall}}$ & $\text{rad}$ or $\text{deg}$ & $[1]$ (dimensionless) \\
 Airfoil Chord Length & $c$ & $\text{m}$ & $[L]$ \\
-Maximum Camber Height & $h$ & $\text{m}$ & $[L]$ \\
 Maximum Thickness & $t$ & $\text{m}$ & $[L]$ \\
+Maximum Camber Height & $h$ & $\text{m}$ & $[L]$ \\
 Freestream Air Speed & $U_\infty$ & $\text{m/s}$ & $[L T^{-1}]$ \\
 Air Density & $\rho$ & $\text{kg/m}^3$ & $[M L^{-3}]$ \\
 Air Dynamic Viscosity & $\mu$ & $\text{Pa}\cdot\text{s}$ & $[M L^{-1} T^{-1}]$ \\ \bottomrule
@@ -89,16 +89,17 @@ We have $n = 7$ physical variables expressed in $k = 3$ fundamental dimensions: 
 
 Selecting the fluid dynamic reference scale $(\rho,\, U_\infty,\, c)$ as repeating variables, we construct the dimensionless $\Pi$-groups:
 \begin{enumerate}[leftmargin=*]
-    \item \textbf{Group 1 ($\Pi_1 = \alpha_{\text{stall}}$):} The dependent parameter of interest, the critical stall angle (dimensionless).
-    \item \textbf{Group 2 ($\Pi_2 = h/c = m$):} The \textbf{Airfoil Camber Ratio} (maximum camber expressed as a percentage or fraction of chord).
-    \item \textbf{Group 3 ($\Pi_3 = t/c$):} The \textbf{Airfoil Thickness Ratio} (maximum thickness as a percentage or fraction of chord).
-    \item \textbf{Group 4 ($\Pi_4 = \frac{\rho U_\infty c}{\mu} = \frac{U_\infty c}{\nu} = Re$):} The \textbf{Reynolds Number}, which scales the ratio of fluid inertia (momentum) to viscous friction.
+    \item \textbf{Target Dimensionless Output ($\Pi_{\alpha} = \alpha_{\text{stall}}$):} The critical stall angle of attack (dimensionless).
+    \item \textbf{Group 1 ($\Pi_1 = t/c$):} The \textbf{Airfoil Thickness Ratio} (maximum thickness relative to chord).
+    \item \textbf{Group 2 ($\Pi_2 = h/c = m$):} The \textbf{Airfoil Camber Ratio} (maximum camber relative to chord).
+    \item \textbf{Group 3 ($\Pi_3 = \frac{\rho U_\infty c}{\mu} = Re$):} The \textbf{Reynolds Number}, which scales fluid inertia (momentum) relative to viscous friction.
 \end{enumerate}
 
-Therefore, dimensional analysis proves that the stall angle does not depend on arbitrary combinations of meters, kilograms, or seconds independently. Rather, it is strictly governed by a universal functional relationship:
+Therefore, dimensional analysis proves that the stall angle does not depend on arbitrary combinations of meters, kilograms, or seconds independently. Rather, it is strictly governed by three independent dimensionless groups:
 \begin{equation}
-\mathbf{\alpha_{\text{stall}} = \Phi\left(m,\, \frac{t}{c},\, Re\right)}
+\mathbf{\alpha_{\text{stall}} = \Phi\left(\Pi_1,\, \Pi_2,\, \Pi_3\right) = \Phi\left(\frac{t}{c},\, m,\, Re\right)}
 \end{equation}
+These three independent $\Pi$-groups directly define the division of labor across our \textbf{three specialized student research teams}.
 Furthermore, during an angle of attack sweep, the dimensionless lift coefficient $C_L = \frac{L}{\frac{1}{2}\rho U_\infty^2 c}$ traces an aerodynamic curve:
 \begin{equation}
 C_L = g\left(\alpha;\, m,\, \frac{t}{c},\, Re\right)
@@ -167,15 +168,21 @@ To ensure reproducibility across all student research teams, each data point mus
 \end{enumerate}
 
 \newpage
-\section{Consortium Division Assignments}
+\section{Consortium Research Team Assignments (One per \texorpdfstring{$\Pi$}{Pi}-Group)}
 
-The class is partitioned into four research divisions. Each division is responsible for executing high-density angle of attack sweeps across their assigned parameter matrix.
+The class is partitioned into \textbf{three specialized research teams}, corresponding directly to the three dimensionless $\Pi$-groups derived from Buckingham $\Pi$ analysis:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Team 1 ($\Pi_1 = t/c$):} Airfoil Thickness \& Nose Curvature Team
+    \item \textbf{Team 2 ($\Pi_2 = m$):} Airfoil Camber \& Zero-Lift Asymmetry Team
+    \item \textbf{Team 3 ($\Pi_3 = Re$):} Reynolds Number \& Viscous Scale Team
+\end{itemize}
+Each team executes systematic angle of attack sweeps across their assigned $\Pi$-group parameter matrix to extract their individual power-law scaling exponent, and additionally acquires one coupled benchmark validation profile to test the consortium's unified general model.
 
-\subsection{Division 1: Airfoil Thickness (\texorpdfstring{$t/c$}{t/c}) \& Nose Curvature Division}
-\textbf{Primary Objective:} Quantify the impact of leading-edge radius and airfoil thickness on stall onset angle and determine whether thicker profiles experience sudden or docile stall.
+\subsection{Team 1: Airfoil Thickness Ratio (\texorpdfstring{$\Pi_1 = t/c$}{Pi1 = t/c}) Team}
+\textbf{Primary Objective:} Quantify how leading-edge radius and thickness ratio govern stall onset angle, extract the power-law exponent $a$ in $\alpha_{\text{stall}} \propto (t/c)^a$, and evaluate coupled thin-camber validation profile NACA 4406.
 \begin{itemize}
     \item \textbf{Fixed Controls:} Baseline Reynolds number $Re = 1000$, Camber $m = 0\%$ (Symmetric Series).
-    \item \textbf{Airfoil Sweep Matrix:}
+    \item \textbf{Primary Airfoil Sweep Matrix:}
     \begin{enumerate}
         \item \textbf{NACA 0006:} Ultra-thin ($t/c = 6\%$) --- Sharp leading edge, high susceptibility to separation bubble burst.
         \item \textbf{NACA 0009:} Moderately thin ($t/c = 9\%$) --- Classic high-speed profile.
@@ -190,13 +197,14 @@ The class is partitioned into four research divisions. Each division is responsi
     \alpha_{\text{stall}} \propto \left(\frac{t}{c}\right)^a.
     \end{equation}
     Identify the peak performance ratio and document why $t/c = 0.24$ departs from this power-law trend.
+    \item \textbf{Coupled Validation Benchmark:} Sweep \textbf{NACA 4406} ($m=0.04, t/c=0.06, Re=1000$) to provide an independent blind-test case evaluating how high camber acts on an ultra-thin leading edge.
 \end{itemize}
 
-\subsection{Division 2: Airfoil Camber (\texorpdfstring{$m$}{m}) \& Zero-Lift Asymmetry Division}
-\textbf{Primary Objective:} Determine how mean camber line curvature shifts the zero-lift angle $\alpha_0$, alters maximum lift $C_{L,\max}$, and affects the stall angle $\alpha_{\text{stall}}$.
+\subsection{Team 2: Airfoil Camber Ratio (\texorpdfstring{$\Pi_2 = m$}{Pi2 = m}) Team}
+\textbf{Primary Objective:} Quantify how mean camber line curvature shifts zero-lift angle $\alpha_0$ and stall angle $\alpha_{\text{stall}}$, extract the power-law exponent $b$ in $\alpha_{\text{stall}} \propto (1+m)^b$, and evaluate coupled thick-camber validation profile NACA 4418.
 \begin{itemize}
     \item \textbf{Fixed Controls:} Baseline Reynolds number $Re = 1000$, Thickness $t/c = 12\%$, Maximum Camber Location $p = 0.4c$ (\texttt{NACA X412} Family).
-    \item \textbf{Airfoil Sweep Matrix:}
+    \item \textbf{Primary Airfoil Sweep Matrix:}
     \begin{enumerate}
         \item \textbf{NACA 0012:} Symmetric reference ($m = 0\%$).
         \item \textbf{NACA 1412:} Mild camber ($m = 1\%$).
@@ -211,13 +219,14 @@ The class is partitioned into four research divisions. Each division is responsi
     \alpha_{\text{stall}} \propto (1 + m)^b.
     \end{equation}
     Contrast this stall angle sensitivity against the significant gain observed in $C_{L,\max}$ vs $m$.
+    \item \textbf{Coupled Validation Benchmark:} Sweep \textbf{NACA 4418} ($m=0.04, t/c=0.18, Re=1000$) to provide an independent blind-test case evaluating how a generous nose radius mitigates aggressive camber stall.
 \end{itemize}
 
-\subsection{Division 3: Reynolds Number (\texorpdfstring{$Re$}{Re}) \& Viscous Scale Division}
-\textbf{Primary Objective:} Determine the empirical scaling law connecting Reynolds number to boundary layer energization and stall angle delay.
+\subsection{Team 3: Reynolds Number (\texorpdfstring{$\Pi_3 = Re$}{Pi3 = Re}) Team}
+\textbf{Primary Objective:} Quantify how Reynolds number energizes the boundary layer, extract the power-law exponent $c$ in $\alpha_{\text{stall}} \propto Re^c$, and characterize dynamic vortex shedding and inverted stall asymmetry.
 \begin{itemize}
     \item \textbf{Fixed Controls:} Standard NACA 2412 airfoil profile ($m=2\%$, $p=0.4c$, $t/c=12\%$).
-    \item \textbf{Reynolds Number Sweep Matrix:}
+    \item \textbf{Primary Reynolds Number Sweep Matrix:}
     \begin{enumerate}
         \item \textbf{$Re = 300$:} Viscous-dominated flow (thick laminar boundary layer, micro-aerial scale).
         \item \textbf{$Re = 600$:} Low Reynolds number transitional regime.
@@ -232,31 +241,13 @@ The class is partitioned into four research divisions. Each division is responsi
     \alpha_{\text{stall}} \propto Re^c.
     \end{equation}
     Relate exponent $c$ to the momentum diffusion of boundary layer thinning ($\delta \propto Re^{-1/2}$).
-\end{itemize}
-
-\subsection{Division 4: Coupled Interaction \& Benchmark Validation Division}
-\textbf{Primary Objective:} Investigate coupled camber-thickness interactions, quantify dynamic vortex shedding oscillation amplitudes, and supply blind validation test cases for the consortium general model.
-\begin{itemize}
-    \item \textbf{Sweep Matrix A (Coupled Geometry Matrix):}
-    \begin{enumerate}
-        \item \textbf{NACA 4406:} High camber ($4\%$) + Ultra-thin ($6\%$) --- Severe suction peak combined with sharp nose.
-        \item \textbf{NACA 4418:} High camber ($4\%$) + Thick ($18\%$) --- Camber-thickness synergy.
-        \item \textbf{NACA 0006 vs NACA 0018:} Thickness extremes under symmetric conditions.
-    \end{enumerate}
-    \item \textbf{Sweep Matrix B (Bidirectional Inverted Stall Exploration):}
-    \begin{enumerate}
-        \item Execute a continuous bidirectional sweep on \textbf{NACA 2412} from $\alpha = -16.0^\circ$ to $+20.0^\circ$.
-        \item Locate positive stall ($\alpha_{\text{stall}}^+, C_{L,\max}^+$) and inverted negative stall ($\alpha_{\text{stall}}^-, C_{L,\min}^-$).
-    \end{enumerate}
-    \item \textbf{Deliverable Plot 4.1:} Dynamic shedding envelope diagram: plot oscillation amplitude $\Delta C_L = C_{L,\max} - C_{L,\min}$ (error whiskers) as a function of degrees past stall $(\alpha - \alpha_{\text{stall}})$.
-    \item \textbf{Deliverable Plot 4.2:} Cambered airfoil stall asymmetry comparison: contrast positive vs inverted stall modes.
-    \item \textbf{Validation Benchmark Role:} Cases NACA 4406 and NACA 4418 provide independent targets to test the predictive accuracy of the class-wide unified formula.
+    \item \textbf{Dynamic Shedding \& Inverted Benchmark:} Execute a continuous bidirectional sweep on \textbf{NACA 2412} from $\alpha = -16.0^\circ$ to $+20.0^\circ$. Locate positive stall ($\alpha_{\text{stall}}^+, C_{L,\max}^+$) and inverted negative stall ($\alpha_{\text{stall}}^-, C_{L,\min}^-$), and plot shedding amplitude $\Delta C_L = C_{L,\max} - C_{L,\min}$ (error whiskers) past stall.
 \end{itemize}
 
 \newpage
 \section{Classroom Consortium: Multi-Variable Data Pooling}
 
-Following data acquisition, each division will deposit their calibrated data points into the \textbf{Consortium Master Telemetry Database}. Every team will then have access to the complete 4D matrix for power-law synthesis and model validation.
+Following data acquisition, each team will deposit their calibrated data points into the \textbf{Consortium Master Telemetry Database}. Every student will then have access to the complete parametric matrix for power-law synthesis and model validation.
 
 \begin{table}[h!]
 \centering
@@ -264,36 +255,40 @@ Following data acquisition, each division will deposit their calibrated data poi
 \renewcommand{\arraystretch}{1.2}
 \begin{tabular}{@{}llccccc@{}}
 \toprule
-\textbf{Div.} & \textbf{Airfoil / Case} & $\mathbf{m}$ & $\mathbf{t/c}$ & $\mathbf{Re}$ & \textbf{Meas. } $\mathbf{\alpha_{\text{stall}}}$ (\si{\degree}) & \textbf{Meas. } $\mathbf{C_{L,\max}}$ \\ \midrule
+\textbf{Team} & \textbf{Airfoil / Case} & $\mathbf{m}$ & $\mathbf{t/c}$ & $\mathbf{Re}$ & \textbf{Meas. } $\mathbf{\alpha_{\text{stall}}}$ (\si{\degree}) & \textbf{Meas. } $\mathbf{C_{L,\max}}$ \\ \midrule
+\multicolumn{7}{@{}l}{\textbf{Team 1: Thickness ($\Pi_1 = t/c$) Matrix ($m=0$, $Re=1000$)}} \\
 1 & NACA 0006 & 0.00 & 0.06 & 1000 & \rule{1.5cm}{0.15mm} & \rule{1.5cm}{0.15mm} \\
 1 & NACA 0009 & 0.00 & 0.09 & 1000 & \rule{1.5cm}{0.15mm} & \rule{1.5cm}{0.15mm} \\
-1 & NACA 0012 & 0.00 & 0.12 & 1000 & \rule{1.5cm}{0.15mm} & \rule{1.5cm}{0.15mm} \\
+1 & NACA 0012 (Symmetric Ref.) & 0.00 & 0.12 & 1000 & \rule{1.5cm}{0.15mm} & \rule{1.5cm}{0.15mm} \\
 1 & NACA 0018 & 0.00 & 0.18 & 1000 & \rule{1.5cm}{0.15mm} & \rule{1.5cm}{0.15mm} \\
 1 & NACA 0024 & 0.00 & 0.24 & 1000 & \rule{1.5cm}{0.15mm} & \rule{1.5cm}{0.15mm} \\ \midrule
+\multicolumn{7}{@{}l}{\textbf{Team 2: Camber ($\Pi_2 = m$) Matrix ($t/c=0.12$, $Re=1000$)}} \\
 2 & NACA 1412 & 0.01 & 0.12 & 1000 & \rule{1.5cm}{0.15mm} & \rule{1.5cm}{0.15mm} \\
-2 & NACA 2412 & 0.02 & 0.12 & 1000 & \rule{1.5cm}{0.15mm} & \rule{1.5cm}{0.15mm} \\
+2 & NACA 2412 (GA Benchmark) & 0.02 & 0.12 & 1000 & \rule{1.5cm}{0.15mm} & \rule{1.5cm}{0.15mm} \\
 2 & NACA 4412 & 0.04 & 0.12 & 1000 & \rule{1.5cm}{0.15mm} & \rule{1.5cm}{0.15mm} \\
 2 & NACA 6412 & 0.06 & 0.12 & 1000 & \rule{1.5cm}{0.15mm} & \rule{1.5cm}{0.15mm} \\ \midrule
+\multicolumn{7}{@{}l}{\textbf{Team 3: Reynolds Number ($\Pi_3 = Re$) Matrix (NACA 2412)}} \\
 3 & NACA 2412 ($Re=300$) & 0.02 & 0.12 & 300 & \rule{1.5cm}{0.15mm} & \rule{1.5cm}{0.15mm} \\
 3 & NACA 2412 ($Re=600$) & 0.02 & 0.12 & 600 & \rule{1.5cm}{0.15mm} & \rule{1.5cm}{0.15mm} \\
 3 & NACA 2412 ($Re=1200$) & 0.02 & 0.12 & 1200 & \rule{1.5cm}{0.15mm} & \rule{1.5cm}{0.15mm} \\
 3 & NACA 2412 ($Re=2500$) & 0.02 & 0.12 & 2500 & \rule{1.5cm}{0.15mm} & \rule{1.5cm}{0.15mm} \\
 3 & NACA 2412 ($Re=5000$) & 0.02 & 0.12 & 5000 & \rule{1.5cm}{0.15mm} & \rule{1.5cm}{0.15mm} \\ \midrule
-4 & NACA 4406 (Coupled Validation) & 0.04 & 0.06 & 1000 & \rule{1.5cm}{0.15mm} & \rule{1.5cm}{0.15mm} \\
-4 & NACA 4418 (Coupled Validation) & 0.04 & 0.18 & 1000 & \rule{1.5cm}{0.15mm} & \rule{1.5cm}{0.15mm} \\
-4 & NACA 2412 (Inverted Benchmark) & 0.02 & 0.12 & 1000 & \rule{1.5cm}{0.15mm} & \rule{1.5cm}{0.15mm} \\ \bottomrule
+\multicolumn{7}{@{}l}{\textbf{Consortium Benchmark \& Coupled Validation Targets}} \\
+1 & NACA 4406 (Team 1 Coupled Validation) & 0.04 & 0.06 & 1000 & \rule{1.5cm}{0.15mm} & \rule{1.5cm}{0.15mm} \\
+2 & NACA 4418 (Team 2 Coupled Validation) & 0.04 & 0.18 & 1000 & \rule{1.5cm}{0.15mm} & \rule{1.5cm}{0.15mm} \\
+3 & NACA 2412 (Team 3 Inverted Benchmark) & 0.02 & 0.12 & 1000 & \rule{1.5cm}{0.15mm} & \rule{1.5cm}{0.15mm} \\ \bottomrule
 \end{tabular}
-\caption{Consortium Master Parametric Telemetry Table for power-law synthesis and model validation.}
+\caption{Consortium Master Parametric Telemetry Table organized by $\Pi$-group research teams.}
 \label{tab:master_table}
 \end{table}
 
 \section{Analysis \& Discussion Prompts}
 
-Each research division will author a technical report evaluating their isolated power-law dependency and synthesizing the global consortium findings. Address the following analytical prompts:
+Each research team will author a technical report evaluating their isolated $\Pi$-group power-law dependency and synthesizing the global consortium findings. Address the following analytical prompts:
 
 \begin{enumerate}[leftmargin=*]
-    \item \textbf{Thickness Power-Law Evaluation \& Aerodynamic Limits:}
-    Evaluate Division 1's isolated parameter sweep.
+    \item \textbf{Team 1 Analysis: Thickness Power-Law ($\Pi_1 = t/c$) \& Aerodynamic Limits:}
+    Evaluate Team 1's isolated parameter sweep.
     \begin{itemize}
         \item Present the log-log plot of $\ln(\alpha_{\text{stall}})$ vs $\ln(t/c)$ for $t/c \in [0.06, 0.18]$.
         \item Determine the empirical thickness power-law exponent $a$ in $\alpha_{\text{stall}} \propto (t/c)^a$.
@@ -301,42 +296,43 @@ Each research division will author a technical report evaluating their isolated 
         \item Why does increasing thickness beyond $t/c \approx 0.18$ cause a departure from this power law?
     \end{itemize}
 
-    \item \textbf{Camber Power-Law Evaluation \& Lift Capability:}
-    Evaluate Division 2's isolated parameter sweep.
+    \item \textbf{Team 2 Analysis: Camber Power-Law ($\Pi_2 = m$) \& Lift Capability:}
+    Evaluate Team 2's isolated parameter sweep.
     \begin{itemize}
-        \item Present the plot of $\ln(\alpha_{\text{stall}}/\alpha_{\text{stall},0})$ vs $\ln(1+m)$.
+        \item Present the plot of normalized stall angle $\ln(\alpha_{\text{stall}}/\alpha_{\text{stall},0})$ vs $\ln(1+m)$.
         \item Determine the empirical camber power-law exponent $b$ in $\alpha_{\text{stall}} \propto (1+m)^b$.
         \item Contrast the effect of camber on $C_{L,\max}$ (significant boost) versus its effect on $\alpha_{\text{stall}}$ (mild shift). Why does NACA 6412 achieve higher $C_{L,\max}$ than NACA 0012 despite an intensified suction peak?
         \item Verify Thin Airfoil Theory: calculate the lift curve slope $dC_L/d\alpha$ in the linear regime and compare to $2\pi$. Calculate the zero-lift angle $\alpha_0$ and compare to theoretical prediction $\alpha_0 \approx -1.1 m$.
     \end{itemize}
 
-    \item \textbf{Reynolds Number Power-Law Evaluation \& Viscous Momentum:}
-    Evaluate Division 3's isolated parameter sweep.
+    \item \textbf{Team 3 Analysis: Reynolds Number Power-Law ($\Pi_3 = Re$) \& Viscous Momentum:}
+    Evaluate Team 3's isolated parameter sweep.
     \begin{itemize}
-        \item Present the log-log scaling plot of $\ln(\alpha_{\text{stall}})$ vs $\ln(Re)$.
+        \item Present the log-log scaling plot of $\ln(\alpha_{\text{stall}})$ vs $\ln(Re)$ across all five test points.
         \item Determine the empirical Reynolds power-law exponent $c$ in $\alpha_{\text{stall}} \propto Re^c$.
         \item Relate your exponent $c$ to the laminar boundary layer thickness scaling $\delta/c \propto Re^{-1/2}$. Why does an energized, thinner boundary layer delay flow separation to higher angles?
     \end{itemize}
 
-    \item \textbf{Post-Stall Dynamics \& Force Vector Behavior:}
+    \item \textbf{Post-Stall Dynamics, Inverted Asymmetry \& Force Vector Behavior:}
     Observe the real-time vector overlay ($\vec{L}, \vec{D}, \vec{R}$) and smoke streamlines across stall.
     \begin{itemize}
         \item How does the orientation of the resultant force vector $\vec{R}$ rotate as the airfoil transitions into deep stall?
         \item In deep stall, how does the shedding oscillation envelope $[C_{L,\min}, C_{L,\max}]$ relate to the formation and shedding of von K\'{a}rm\'{a}n vortex street structures in the wake?
+        \item Using Team 3's bidirectional sweep, contrast positive stall ($\alpha_{\text{stall}}^+, C_{L,\max}^+$) against inverted stall ($\alpha_{\text{stall}}^-, C_{L,\min}^-$) on NACA 2412.
     \end{itemize}
 
     \item \textbf{Consortium Synthesis: Proposing the Unified General Stall Law:}
-    Combine the individual power-law dependencies determined separately by Divisions 1, 2, and 3 to propose a general multiplicative formula for the stall angle:
+    Combine the individual power-law dependencies determined separately by Teams 1, 2, and 3 to propose a general multiplicative formula for the stall angle:
     \begin{equation}
     \mathbf{\alpha_{\text{stall}}\left(m,\, \frac{t}{c},\, Re\right) = K \cdot \left(\frac{t}{c}\right)^a \cdot (1 + m)^b \cdot Re^c}
     \end{equation}
     \begin{itemize}
-        \item \textbf{Exponent Assembly:} Substitute the numerical values of exponents $a$, $b$, and $c$ obtained by each division.
+        \item \textbf{Exponent Assembly:} Substitute the numerical values of exponents $a$, $b$, and $c$ obtained by each $\Pi$-group team.
         \item \textbf{Calibration Constant:} Using the baseline benchmark airfoil (e.g., NACA 0012 or NACA 2412 at $Re=1000$), calculate the leading constant $K$:
         \begin{equation}
         K = \frac{\alpha_{\text{stall, base}}}{\left(\frac{t}{c}\right)_{\text{base}}^a \cdot (1 + m_{\text{base}})^b \cdot Re_{\text{base}}^c}.
         \end{equation}
-        \item \textbf{Model Validation against Division 4:} Use your general formula to predict the stall angle for Division 4's coupled test cases:
+        \item \textbf{Model Validation against Coupled Benchmarks:} Use your general formula to predict the stall angle for the coupled validation test cases:
         \begin{enumerate}
             \item \textbf{NACA 4406:} ($m = 0.04$, $t/c = 0.06$, $Re = 1000$)
             \item \textbf{NACA 4418:} ($m = 0.04$, $t/c = 0.18$, $Re = 1000$)
@@ -361,7 +357,7 @@ Each research division will author a technical report evaluating their isolated 
 \textbf{Experimental Protocol \& DAQ Rigor} & Correct execution of 5s burst integration protocol; flow settled state verified; appropriate angle density ($0.5^\circ$ near stall); complete CSV exports. & 20 \\
 \textbf{Data Visualization \& Polar Curves} & Clear, publication-grade polar plots ($C_L$ vs $\alpha$, $C_D$ vs $\alpha$, $L/D$ vs $\alpha$) with error whiskers, stall points clearly identified, theoretical references included. & 20 \\
 \textbf{Physical Mechanisms \& Fluid Dynamics} & Sound, thorough physical reasoning explaining separation, suction peaks, boundary layer energy, vortex shedding, and thin vs trailing-edge stall. & 25 \\
-\textbf{Consortium Synthesis \& Power-Law Model} & Accurate exponent extraction from log-log power-law plots; successful combination into general formula $\alpha_{\text{stall}} = K (t/c)^a (1+m)^b Re^c$; validation and error analysis against coupled test cases. & 20 \\
+\textbf{Consortium Synthesis \& Power-Law Model} & Accurate exponent extraction from log-log power-law plots across all three $\Pi$-groups; successful synthesis of general formula $\alpha_{\text{stall}} = K (t/c)^a (1+m)^b Re^c$; validation and error analysis against coupled test cases. & 20 \\
 \textbf{Technical Communication \& Formatting} & Clear engineering report organization; proper unit annotations; professional tables, diagrams, and executive summary. & 15 \\ \midrule
 \textbf{Total} & & \textbf{100} \\ \bottomrule
 \end{tabular}
