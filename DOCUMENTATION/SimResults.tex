@@ -79,7 +79,7 @@ Using the GPU-accelerated 2D D2Q9 Lattice Boltzmann solver (\textbf{WindTunnel l
 
 Team 1 evaluated the stall angle of attack $\alpha_{\text{stall}}$ as a function of maximum relative thickness $\Pi_1 = t/c \in \{0.06, 0.09, 0.12, 0.18, 0.24\}$ across the symmetric four-digit family (\texttt{NACA 0006, 0009, 0012, 0018, 0024}) at fixed camber $m = 0.00$ and Reynolds number $Re = 1000$. Table~\ref{tab:team1} summarizes the measured stall angles and their logarithmic transforms.
 
-\begin{table}[!htbp]
+\begin{table}[H]
 \centering
 \small
 \renewcommand{\arraystretch}{1.18}
@@ -102,7 +102,7 @@ Figure~\ref{fig:team1_powerlaw} presents the stall angle $\alpha_{\text{stall}}$
 \end{equation}
 corresponding to the power law $\alpha_{\text{stall}} = 30.90^\circ\,(t/c)^{0.335}$. At $t/c = 0.24$ (\texttt{NACA 0024}), the steep aft closure angle triggers trailing-edge pressure-recovery separation, causing $\alpha_{\text{stall}}$ to saturate at $17.0^\circ$ ($2.2^\circ$ below the extrapolated $19.17^\circ$ value).
 
-\begin{figure}[!htbp]
+\begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{figures/fig_team1_powerlaw.pdf}
     \caption{\textbf{Team 1 Deliverable ($\Pi_1 = t/c$ at $m=0, Re=1000$).} (a) Main plot of stall angle of attack $\alpha_{\text{stall}}$ as a function of thickness ratio $t/c$ with the fitted power-law curve $\alpha_{\text{stall}} = 30.90^\circ (t/c)^{0.335}$. (b) Log-log version $\ln(\alpha_{\text{stall}})$ vs.\ $\ln(t/c)$ extracting the exponent $a = 0.335$ ($R^2 = 0.951$) and showing the high-thickness saturation at $t/c = 0.24$.}
@@ -115,7 +115,7 @@ corresponding to the power law $\alpha_{\text{stall}} = 30.90^\circ\,(t/c)^{0.33
 
 Team 2 evaluated the stall angle of attack $\alpha_{\text{stall}}$ as a function of maximum camber ratio $\Pi_2 = m \in \{0.00, 0.01, 0.02, 0.04, 0.06\}$ across the \texttt{NACA X412} series (\texttt{NACA 0012, 1412, 2412, 4412, 6412}) at fixed thickness $t/c = 0.12$, maximum camber position $p = 0.4$, and Reynolds number $Re = 1000$. Table~\ref{tab:team2} lists the measured stall angles and normalized log-log coordinates relative to the symmetric baseline $\alpha_{\text{stall},0} = 16.0^\circ$ (\texttt{NACA 0012}).
 
-\begin{table}[!htbp]
+\begin{table}[H]
 \centering
 \small
 \renewcommand{\arraystretch}{1.18}
@@ -138,7 +138,7 @@ Figure~\ref{fig:team2_powerlaw} displays $\alpha_{\text{stall}}$ as a function o
 \end{equation}
 corresponding to $\alpha_{\text{stall}} = 16.11^\circ\,(1 + m)^{1.612}$.
 
-\begin{figure}[!htbp]
+\begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{figures/fig_team2_powerlaw.pdf}
     \caption{\textbf{Team 2 Deliverable ($\Pi_2 = m$ at $t/c=0.12, Re=1000$).} (a) Main plot of stall angle of attack $\alpha_{\text{stall}}$ as a function of maximum camber ratio $m$ with the fitted power-law curve $\alpha_{\text{stall}} = 16.11^\circ (1+m)^{1.612}$. (b) Log-log version $\ln(\alpha_{\text{stall}}/\alpha_{\text{stall},0})$ vs.\ $\ln(1+m)$ extracting the exponent $b = 1.612$ ($R^2 = 0.893$).}
@@ -151,7 +151,7 @@ corresponding to $\alpha_{\text{stall}} = 16.11^\circ\,(1 + m)^{1.612}$.
 
 Team 3 evaluated the stall angle of attack $\alpha_{\text{stall}}$ on a fixed \texttt{NACA 2412} profile ($m = 0.02, p = 0.4, t/c = 0.12$) as a function of Reynolds number across $\Pi_3 = Re \in \{300, 600, 1200, 2500, 5000\}$. Table~\ref{tab:team3} summarizes the measured stall angles and their logarithmic coordinates.
 
-\begin{table}[!htbp]
+\begin{table}[H]
 \centering
 \small
 \renewcommand{\arraystretch}{1.18}
@@ -174,7 +174,7 @@ Figure~\ref{fig:team3_powerlaw} shows $\alpha_{\text{stall}}$ as a function of R
 \end{equation}
 corresponding to the power law $\alpha_{\text{stall}} = 8.75^\circ\,Re^{0.0912}$.
 
-\begin{figure}[!htbp]
+\begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{figures/fig_team3_powerlaw.pdf}
     \caption{\textbf{Team 3 Deliverable ($\Pi_3 = Re$ on \texttt{NACA 2412}, $m=0.02, t/c=0.12$).} (a) Main plot of stall angle of attack $\alpha_{\text{stall}}$ as a function of Reynolds number $Re$ with the fitted power-law curve $\alpha_{\text{stall}} = 8.75^\circ Re^{0.0912}$. (b) Log-log version $\ln(\alpha_{\text{stall}})$ vs.\ $\ln(Re)$ extracting the exponent $c = 0.0912$ ($R^2 = 0.869$).}
@@ -193,7 +193,7 @@ yields $K = 17.323^\circ$ when anchored solely at \texttt{NACA 0012} ($m = 0, t/
 
 To test multi-parameter separability on geometries where both thickness and camber are varied simultaneously away from the baseline axes, Table~\ref{tab:validation} compares the predictions of the unified stall formula against direct LBM measurements on \textbf{\texttt{NACA 4406}} ($m = 0.04, t/c = 0.06, Re = 1000$) and \textbf{\texttt{NACA 4418}} ($m = 0.04, t/c = 0.18, Re = 1000$). Both validation cases agree with the unified power-law formula to within the $0.5^\circ$ angular sweep step ($0.34\%$ and $3.02\%$ error, respectively).
 
-\begin{table}[!htbp]
+\begin{table}[H]
 \centering
 \small
 \renewcommand{\arraystretch}{1.22}
